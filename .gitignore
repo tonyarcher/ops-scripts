@@ -1,0 +1,38 @@
+# IDE
+.idea/
+*.iml
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.local.*
+
+# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Python
+__pycache__/
+.venv/
+venv/
+*.pyc
+
+# Node
+node_modules/
+
+# JVM
+*.class
+.gradle/
+build/
+target/
+.kotlin/
+
+# Logs
+*.log
+
+# Local data dumps
+tmp/
+var/

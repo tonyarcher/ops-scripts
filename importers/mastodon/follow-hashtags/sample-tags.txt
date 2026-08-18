@@ -1,0 +1,6 @@
+# sample hashtag list (lines starting with "# " are comments)
+cats
+#dogs
+OpenSource
+FOSS
+mastodon
