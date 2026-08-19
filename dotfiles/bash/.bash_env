@@ -1,0 +1,105 @@
+# =============================================================================
+#  ~/.bash_env  --  THE file for environment variables and PATH
+#
+#  This is the single place you should add/change:
+#    * JAVA_HOME, MAVEN_HOME, GRADLE_HOME, ANDROID_HOME, GOPATH, ...
+#    * your own PATH entries
+#  It is sourced from ~/.bashrc, which is loaded by interactive terminals AND
+#  (via Ubuntu's ~/.profile) by login shells (e.g. SSH).
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+#  PATH 101  --  read this once, it explains everything below
+#  --------------------------------------------------------------------------
+#  PATH is a colon-separated list of directories searched in order when you
+#  type a command name. The first match wins.
+#
+#      export PATH="$HOME/bin:$PATH"   #  PREPEND -> your tool takes priority
+#      export PATH="$PATH:$HOME/bin"   #  APPEND  -> system tool takes priority
+#
+#  - `export` makes the variable visible to every program you launch.
+#    WITHOUT it the variable dies with the current shell -> always use export.
+#  - Quote paths containing spaces:  export FOO="$HOME/My Tools/bin"
+#  - $PATH must appear on the right side or you lose the previous entries!
+#  - Commands are usually found via the *bin* subdirectory of a tool's home.
+#  - The classic directories that are ALREADY on PATH by default:
+#    /usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin
+#    ~/.local/bin and ~/bin are NOT guaranteed -> add them yourself below.
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+#  JAVA_HOME
+#  --------------------------------------------------------------------------
+#  Ubuntu installs OpenJDK under /usr/lib/jvm. Common versions:
+#      /usr/lib/jvm/java-8-openjdk-amd64
+#      /usr/lib/jvm/java-11-openjdk-amd64
+#      /usr/lib/jvm/java-17-openjdk-amd64
+#      /usr/lib/jvm/java-21-openjdk-amd64    (Ubuntu 24.04)
+#  If you install a JDK manually (e.g. from Adoptium/Temurin), unpack it to
+#  ~/tools/ and point JAVA_HOME at that directory instead.
+
+# Option A (recommended): auto-detect the newest installed OpenJDK.
+if [ -d /usr/lib/jvm ]; then
+    export JAVA_HOME="$(ls -d /usr/lib/jvm/java-*-openjdk-* 2>/dev/null | sort -V | tail -n 1)"
+fi
+
+# Option B: pin an exact JDK. Uncomment, edit, and comment out Option A.
+# export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+
+# Put the JDK's bin on PATH (guard: only if it actually resolves).
+if [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
+    export PATH="$JAVA_HOME/bin:$PATH"
+fi
+
+# ---------------------------------------------------------------------------
+#  Other JVM-family tools (same pattern as JAVA_HOME: *_HOME + bin on PATH)
+#  --------------------------------------------------------------------------
+export MAVEN_HOME="${MAVEN_HOME:-$HOME/tools/apache-maven-3.9.9}"
+[ -d "$MAVEN_HOME" ] && export PATH="$MAVEN_HOME/bin:$PATH"
+
+# export GRADLE_HOME="$HOME/tools/gradle-8.10.2"
+# [ -d "$GRADLE_HOME" ] && export PATH="$GRADLE_HOME/bin:$PATH"
+
+# export ANDROID_HOME="$HOME/Android/Sdk"
+# [ -d "$ANDROID_HOME" ] && export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/tools/bin:$PATH"
+
+# ---------------------------------------------------------------------------
+#  Node.js -- via nvm (recommended on Ubuntu; avoids sudo npm)
+#  --------------------------------------------------------------------------
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+    . "$NVM_DIR/nvm.sh"                    # loads nvm + the chosen node version
+fi
+
+# ---------------------------------------------------------------------------
+#  Python / Ruby / other languages
+#  --------------------------------------------------------------------------
+# pip --user and pipx put binaries here
+export PATH="$HOME/.local/bin:$PATH"
+
+# Ruby (if installed with rbenv)
+# export PATH="$HOME/.rbenv/bin:$PATH"
+# eval "$(rbenv init - bash 2>/dev/null)" || true
+
+# Go
+# export GOPATH="$HOME/go"
+# export PATH="$GOPATH/bin:$PATH"
+
+# Rust (cargo)
+# export PATH="$HOME/.cargo/bin:$PATH"
+
+# ---------------------------------------------------------------------------
+#  YOUR personal PATH entries -- the "always works" pattern
+#  --------------------------------------------------------------------------
+# Uncomment and adapt. Examples:
+# export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
+# export PATH="$HOME/tools/bin:$PATH"
+# export PATH="$HOME/scripts:$PATH"
+
+# ---------------------------------------------------------------------------
+#  Misc environment
+#  --------------------------------------------------------------------------
+export EDITOR="${EDITOR:-nano}"
+export PAGER="${PAGER:-less}"
+export LANG="${LANG:-C.UTF-8}"
+export TIME_STYLE='long-iso'    # ls -l shows "2026-08-01 10:30" instead of "Aug  1"

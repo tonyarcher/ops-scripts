@@ -1,0 +1,33 @@
+# =============================================================================
+#  ~/.inputrc  --  GNU Readline settings (tab-completion & line editing)
+#  Loaded automatically by every Bash instance. No sourcing needed.
+# =============================================================================
+
+# Don't beep on errors or ambiguous completions
+set bell-style none
+
+# Case-insensitive tab-completion  (type `PRO` + TAB -> `Project.java`)
+set completion-ignore-case on
+
+# Complete on the first TAB; if ambiguous, show the list instead of beeping
+set show-all-if-ambiguous on
+
+# Add a trailing slash to completed directory names
+set mark-directories on
+set mark-symlinked-directories on
+
+# Colour the completion menu
+set colored-stats on
+set visible-stats on
+
+# Treat - and _ as part of a word (nicer filenames like my_file-name.txt)
+set completion-map-case on
+
+# Longest common prefix on first TAB, full menu on second (default)
+set menu-complete-display-prefix on
+
+# Page long completion lists instead of dumping everything at once
+set page-completions on
+
+# Expand ~ to a username when completing
+set expand-tilde on

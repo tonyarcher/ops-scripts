@@ -1,0 +1,71 @@
+# =============================================================================
+#  ~/.bash_prompt  --  the prompt (PS1)
+#
+#  Shows: user@host : /current/dir (git-branch ↑1↓2) $
+#  - green branch   = clean working tree
+#  - red branch     = uncommitted changes
+#  - ↑n / ↓n        = n commits ahead / behind the upstream
+#  - `✗(exit)` in red replaces the $ when the last command failed
+#  Customize the colours with the *_bp_* variables at the top.
+# =============================================================================
+
+# Colours are wrapped in \[...\] so bash does NOT count them towards the line
+# width (otherwise long paths would wrap incorrectly).
+_bp_reset=$'\[\e[0m\]'
+_bp_bold=$'\[\e[1m\]'
+_bp_dim=$'\[\e[2m\]'
+_bp_red=$'\[\e[31m\]'
+_bp_green=$'\[\e[32m\]'
+_bp_yellow=$'\[\e[33m\]'
+_bp_blue=$'\[\e[34m\]'
+_bp_magenta=$'\[\e[35m\]'
+_bp_cyan=$'\[\e[36m\]'
+_bp_gray=$'\[\e[90m\]'
+
+# --- Git segment: (branch ↑n ↓n), empty when not in a repository ----------------
+_bp_git_segment() {
+    command -v git >/dev/null 2>&1 || return
+    local branch status color dirty ahead behind count
+
+    branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+    [ -n "$branch" ] || return
+
+    count="$(git rev-list --count --left-right '@{u}...HEAD' 2>/dev/null)"
+    if [ -n "$count" ]; then
+        behind="${count%$'\t'*}"     # upstream side  = commits behind
+        ahead="${count#*$'\t'}"      # HEAD side       = commits ahead
+    fi
+
+    dirty="$(git status --porcelain 2>/dev/null | head -n 1)"
+    color="${_bp_green}"
+    [ -n "$dirty" ] && color="${_bp_red}"
+
+    printf ' %s(%s%s%s)%s' \
+        "$color" "$branch" \
+        "${ahead:+${_bp_gray}${ahead}↑${color}}" \
+        "${behind:+${_bp_gray}${behind}↓${color}}" \
+        "$_bp_reset"
+}
+
+# --- Assemble PS1 before every prompt ----------------------------------------------
+__bp_prompt_command() {
+    local last=$?   # MUST be read first: exit code of the previous command
+    local title git marker
+
+    # terminal window title: user@host: path
+    case "$TERM" in
+        xterm*|rxvt*|screen*|tmux*|alacritty*|foot*|wezterm*)
+            printf '\033]0;%s\007' "${USER}@${HOSTNAME%%.*}:${PWD/#$HOME/~}" ;;
+    esac
+
+    git="$(_bp_git_segment)"
+
+    marker="${_bp_bold}${_bp_magenta}$ $_bp_reset"
+    [ "$last" -ne 0 ] && marker="${_bp_bold}${_bp_red}✗(${last}) $_bp_reset"
+
+    PS1="${_bp_green}\u${_bp_reset}@${_bp_blue}\h${_bp_reset}:${_bp_cyan}\w${_bp_reset}${git} ${marker}"
+}
+PROMPT_COMMAND='__bp_prompt_command'
+
+# Continuation prompt (when a command spans multiple lines)
+PS2='> '

@@ -13,6 +13,7 @@ data/         one-off transforms, reports, cleanup
 sites/        ad-hoc admin tools grouped by product
 config/       example configs only — never real secrets
 docs/         longer notes when a README section is not enough
+dotfiles/     shell dotfiles + installer (bash/, setup.sh) for Ubuntu/WSL
 ```
 
 ## Conventions
@@ -52,5 +53,6 @@ Agents: see `AGENTS.md`.
 ## Contents
 
 - `importers/mastodon/follow-hashtags/` — bulk-follow Mastodon hashtags from a file, another account's followed_tags, and/or trending tags. TypeScript, dry-run by default.
+- `dotfiles/` — the shell dotfiles and installer (merged from the `dotfiles` repo). See `dotfiles/README.md`; run `bash dotfiles/setup.sh` from the repo to install.
 
 Repo: https://github.com/tonyarcher/ops-scripts

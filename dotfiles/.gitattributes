@@ -1,0 +1,9 @@
+# Keep Unix line endings for all shell/dotfiles, even when checked out on Windows.
+* text=auto
+bash/.bashrc       text eol=lf
+bash/.bash_aliases text eol=lf
+bash/.bash_functions text eol=lf
+bash/.bash_env     text eol=lf
+bash/.bash_prompt  text eol=lf
+bash/.inputrc      text eol=lf
+setup.sh           text eol=lf

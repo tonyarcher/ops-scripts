@@ -1,0 +1,38 @@
+# Global git excludes — IDE and editor folders
+# Applied to every repo via core.excludesFile; add any new editor here.
+#
+# Install:  git config --global core.excludesFile ~/.gitignore_global
+#           (then copy this file to ~/.gitignore_global)
+
+# JetBrains (IntelliJ IDEA, WebStorm, PyCharm, GoLand, etc.)
+.idea/
+.webstorm/
+*.iml
+.metadata/
+
+# Visual Studio Code / Codium
+.vscode/
+.vscode-server/
+.vscode-insiders/
+.code/
+.code-insiders/
+
+# AI coding assistants / CLIs
+.opencode/
+.cursor/
+.cursor-server/
+.claude/
+.grok/
+.gemini/
+.copilot/
+.windsurf/
+.continue/
+
+# Other editors
+.eclipse/
+.fleet/
+.zed/
+.zedapp/
+.netbeans/
+.vim/
+.nvim/

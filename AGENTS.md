@@ -60,6 +60,7 @@ data/         one-off transforms, reports, cleanup
 sites/        ad-hoc admin tools grouped by product
 config/       example configs only — never real secrets
 docs/         longer notes when a README section is not enough
+dotfiles/     shell dotfiles + installer (bash/, setup.sh) for Ubuntu/WSL
 ```
 
 Examples:
