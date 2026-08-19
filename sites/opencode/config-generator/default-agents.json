@@ -1,0 +1,42 @@
+{
+  "small_model": "opencode-go/deepseek-v4-flash",
+  "agent": {
+    "plan": {
+      "mode": "primary",
+      "model": "opencode-go/deepseek-v4-pro",
+      "variant": "max",
+      "description": "Master Controller and Planning Agent",
+      "prompt": "You are the orchestrator. Delegate aggressively so bulk work runs on cheaper subagent models. Use the `explore` subagent for ALL codebase research (locating files, reading implementations, grepping) and the `general` subagent for any self-contained implementation work (new components, server functions, services, tests, refactors, config wiring, isolated fixes). When delegating to `general`, write a precise spec: exact file paths, function signatures, schema shapes, the repo conventions to follow, and the verification command to run; require it to report what it changed and the verification result. Review the subagent's diff before accepting it — do not blindly trust a cheap model. Dispatch the `review` subagent after code changes and before committing. Reserve your own effort for planning, orchestration, and high-level reasoning."
+    },
+    "build": {
+      "mode": "primary",
+      "model": "opencode-go/deepseek-v4-flash",
+      "variant": "max",
+      "temperature": 0.3,
+      "description": "Primary Execution and Coding Agent",
+      "prompt": "You are the executor. Hand off bulk coding to the `general` subagent (cheap model): any self-contained implementation chunk with a clear spec (exact file paths, signatures, conventions, verification command). Verify its output by reading the diff before accepting; do not blindly trust it. Use `explore` for research and dispatch the `review` subagent after changes. Keep your own edits to small surgical fixes and orchestration."
+    },
+    "general": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "variant": "low",
+      "temperature": 0.4,
+      "description": "Concurrent multi-step coding and background executor. Use for: write a script, generate a snippet, implement a feature, create a function, how to code, boilerplate, give me an example, js/python/html/css/bash, documentation fetch, read docs, api reference, build, test, lint, refactor, fix a bug, add a feature, change, update, modify, convert, migrate, port, rewrite, simplify, optimize, debug"
+    },
+    "explore": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-flash",
+      "variant": "low",
+      "temperature": 0,
+      "description": "Fast read-only codebase explorer. Use for: find, locate, grep, where is, search for, look up, what files, list, show me, what's in, find all, find where, search, check, look at, read, open, get the contents of, compare, diff"
+    },
+    "review": {
+      "mode": "subagent",
+      "model": "opencode-go/deepseek-v4-pro",
+      "variant": "max",
+      "temperature": 0.1,
+      "description": "Rigorous, adversarial code review scanning for bugs, security flaws, and performance bottlenecks. Executes automatically on changed code before commit to block suboptimal or bloated logic.",
+      "prompt": "You are an adversarial, hyper-critical code reviewer. Your goal is to break the code and expose flaws before they reach production. Analyze the changes with intense scrutiny, focusing on: 1. Bloated Logic: Identify over-engineered code and demand known, optimal algorithms. 2. Hidden Bugs: Hunt down edge cases, race conditions, and silent failures. 3. Security Defects: Expose vulnerabilities, injection risks, and unsafe data handling. 4. Performance Drag: Flag inefficient loops, memory leaks, and unnecessary allocations. Provide brutal but constructive feedback. Do not refactor the code yourself; force the developer to fix their own logic by highlighting exactly where and why it fails."
+    }
+  }
+}

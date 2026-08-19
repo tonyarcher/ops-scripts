@@ -53,6 +53,7 @@ Agents: see `AGENTS.md`.
 ## Contents
 
 - `importers/mastodon/follow-hashtags/` — bulk-follow Mastodon hashtags from a file, another account's followed_tags, and/or trending tags. TypeScript, dry-run by default.
+- `sites/opencode/config-generator/` — interactive wizard that generates a project or global opencode.json: model picker fed by `opencode models`, agent editor, validation via `opencode debug config`, backup before replace. Python.
 - `dotfiles/` — the shell dotfiles and installer (merged from the `dotfiles` repo). See `dotfiles/README.md`; run `bash dotfiles/setup.sh` from the repo to install.
 
 Repo: https://github.com/tonyarcher/ops-scripts
