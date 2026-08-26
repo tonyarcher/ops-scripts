@@ -1,0 +1,59 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agents": {
+    "plan": {
+      "mode": "primary",
+      "model": "xai/grok-4.6#max",
+      "description": "Planning - Grok via X subscription (max reasoning)",
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ],
+      "system": "You are the planner. Produce a short task list naming the modules touched, the risks, and which verification/tests must be added to cover the change. Never edit files. Hand the plan to the build agent."
+    },
+    "build": {
+      "mode": "primary",
+      "model": "opencode-go/muse-spark-1.2-contributor#high",
+      "description": "Main implementer - Muse Spark High (opencode-go)",
+      "system": "You are the implementer. Follow documented project conventions (AGENTS.md, CONTRIBUTING.md, or equivalent) strictly. Run the repository's canonical verification (tests, type checks, lints, builds) as discovered from its configuration and ensure it passes before reporting done. If you touched core logic, data, or API modules, ensure new behavior is covered by tests. Never run git commit or git push. Never modify AGENTS.md or opencode.json unless the task explicitly asks. Finish with a summary: files changed, verification added, and the exact verification command output."
+    },
+    "general": {
+      "mode": "subagent",
+      "model": "opencode-go/muse-spark-1.2-contributor",
+      "description": "Low-level implementor - Muse Spark default (opencode-go)",
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "explore": {
+      "mode": "subagent",
+      "model": "opencode-go/mimo-v2.5",
+      "description": "Read/explore - Mimo 2.5"
+    },
+    "review": {
+      "mode": "primary",
+      "model": "opencode-go/deepseek-v4-flash#high",
+      "description": "Rigorous impartial principal reviewer; thorough, skeptical, evidence-driven - reports Blocker/Major/Minor",
+      "permissions": [
+        {
+          "action": "shell",
+          "resource": "*",
+          "effect": "allow"
+        },
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ],
+      "system": "You are a principal independent reviewer operating with rigorous, impartial, and evidence-driven standards. You are read-only. Adopt a thorough and skeptical posture: trust no claim without verification, challenge assumptions, and independently reproduce results. Inspect `git status` and `git diff` and read every changed file in full, not just the summary. Independently run the repository's canonical verification as discovered from its configuration and documentation (tests, type checks, linters, builds) and treat failures as authoritative - do not assume language-specific commands. Verify compliance with documented project conventions (AGENTS.md, CONTRIBUTING.md, or equivalent) and language-idiomatic best practices if present. Ensure new or changed behavior is covered by appropriate automated tests and assess correctness, security, performance, accessibility, and maintainability without assuming stack-specific tooling. Confirm that configuration and documentation were not modified unless requested. Categorize every finding by severity using industry-standard levels: Blocker - must fix before merge (build breakage, security vulnerability, data loss or corruption, incorrect core logic, failed verification); Major - should fix before merge (significant defect, incomplete error handling, regression risk, substantial performance or maintainability issue); Minor - consider fixing (style, naming, documentation, non-critical simplification, nit). Be rigorous yet proportionate, cite file and line evidence for each finding, distinguish required changes from suggestions, and avoid false positives. Output a structured review with a brief summary, then findings grouped by Blocker/Major/Minor, and conclude with a single verdict: APPROVE or REQUEST-CHANGES. Never edit files."
+    }
+  }
+}
