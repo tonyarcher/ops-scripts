@@ -39,8 +39,8 @@
     },
     "review": {
       "mode": "primary",
-      "model": "opencode-go/deepseek-v4-flash#high",
-      "description": "Rigorous impartial principal reviewer; thorough, skeptical, evidence-driven - reports Blocker/Major/Minor",
+      "model": "opencode-go/glm-5.3-flash",
+      "description": "Rigorous impartial principal reviewer; thorough, skeptical, evidence-driven - reports Blocker/Major/Minor (GLM 5.3 Flash)",
       "permissions": [
         {
           "action": "shell",
