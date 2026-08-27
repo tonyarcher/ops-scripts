@@ -22,7 +22,7 @@
     },
     "review": {
       "mode": "all",
-      "model": "opencode-go/glm-5.3#high",
+      "model": "opencode-go/glm-5.3-flash#high",
       "description": "Slow, functionality-first principal reviewer; traces behavior, not just the diff; Blocker/Major/Minor",
       "permissions": [
         {
