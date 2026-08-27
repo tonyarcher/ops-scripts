@@ -17,12 +17,12 @@
     "build": {
       "mode": "primary",
       "model": "opencode-go/muse-spark-1.2-contributor#high",
-      "description": "Main implementer - Muse Spark High (opencode-go)",
+      "description": "Main implementer after design",
       "system": "You are the implementer. Follow documented project conventions (AGENTS.md, CONTRIBUTING.md, or equivalent) strictly. Run the repository's canonical verification (tests, type checks, lints, builds) as discovered from its configuration and ensure it passes before reporting done. If you touched core logic, data, or API modules, ensure new behavior is covered by tests. Never run git commit or git push. Never modify AGENTS.md or opencode.json unless the task explicitly asks. After implementation and verification, you MUST dispatch the review agent on the full uncommitted diff and wait for its verdict. Do not treat the work as complete on REQUEST-CHANGES. Fix findings and re-dispatch review. A commit is forbidden until review returns APPROVE. Finish with a summary: files changed, verification added, review verdict, and the exact verification command output."
     },
     "review": {
       "mode": "all",
-      "model": "opencode-go/glm-5.3-flash",
+      "model": "opencode-go/glm-5.3#high",
       "description": "Slow, functionality-first principal reviewer; traces behavior, not just the diff; Blocker/Major/Minor",
       "permissions": [
         {
@@ -41,21 +41,12 @@
     "general": {
       "mode": "subagent",
       "model": "opencode-go/muse-spark-1.2-contributor",
-      "description": "Low-level implementor - Muse Spark default (opencode-go)",
-      "permissions": [
-        {
-          "action": "edit",
-          "resource": "*",
-          "effect": "deny"
-        }
-      ]
+      "description": "Write"
     },
     "explore": {
       "mode": "subagent",
-      "model": "opencode-go/mimo-v2.5",
-      "description": "Read/explore - Mimo 2.5"
+      "model": "opencode-go/muse-spark-1.2-contributor#low",
+      "description": "Read/explore"
     }
-  },
-  "model": "opencode-go/muse-spark-1.2-contributor",
-  "default_agent": "build"
+  }
 }
