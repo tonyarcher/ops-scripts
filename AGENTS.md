@@ -22,12 +22,14 @@ Pick the language from the job, not from habit.
 | Loading, scraping, or manipulating a website / HTTP API | TypeScript on Bun or Node ≥23.6 native TS | `bun run path/to/script.ts` or `node path/to/script.ts` |
 | Local files, data munging, reports that never leave the box | Python 3 | `python path/to/script.py` |
 | SSH, remote shells, server glue, cron wrappers | Python 3, or a small POSIX `sh`/`bash` script if it is genuinely just glue | `python …` or `./script.sh` |
+| Windows services, PnP, audio, other Win32 admin | PowerShell 5.1+ under `windows/` | `powershell -File windows/scripts/…` |
 
 Rules:
 
 - New website/API work is TypeScript. Prefer Bun; Node native TS is an accepted runner. Do not add ts-node, tsx, Deno, Kotlin, or a second HTTP library for that.
 - New local-only or SSH work is Python. Prefer the stdlib. Add a dependency only when stdlib is painful.
 - Shell is for wrappers, cron entries, and `ssh` one-liners — not for parsing HTML or calling JSON APIs.
+- Windows-only work lives in `windows/`. Do not put `.ps1` files in `cron/`, `importers/`, `data/`, `sites/`, or `dotfiles/`. Those trees are Linux/WSL or OS-agnostic.
 
 ### Bun / TypeScript
 
@@ -61,6 +63,7 @@ sites/        ad-hoc admin tools grouped by product
 config/       example configs only — never real secrets
 docs/         longer notes when a README section is not enough
 dotfiles/     shell dotfiles + installer (bash/, setup.sh) for Ubuntu/WSL
+windows/      Windows-only admin scripts (PowerShell). Do not mix Linux/agnostic work here.
 ```
 
 Examples:
@@ -80,7 +83,7 @@ Conventions:
 
 ## Adding a script
 
-1. Choose `importers/`, `cron/`, `data/`, or `sites/` from the job type.
+1. Choose `importers/`, `cron/`, `data/`, or `sites/` from the job type. Windows-only jobs go in `windows/scripts/` instead.
 2. Put it under the product name when it is site-specific (`mastodon/`, …).
 3. Follow the language policy above.
 4. Add a 5–15 line header: what it does, how to run it, required env vars, anything that can destroy data.

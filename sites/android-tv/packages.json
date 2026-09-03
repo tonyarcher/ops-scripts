@@ -1,0 +1,90 @@
+{
+  "device": {
+    "name": "Magicubic HY300 / Skyworth TV Stick",
+    "product": "HP4703-Skyworth",
+    "notes": "Android 14, ~1GB RAM, Amlogic/Skyworth. Home package is com.google.android.tvlauncher (not launcherx)."
+  },
+  "protected": [
+    {"id": "com.sdt.globalkey", "why": "Remote global keys / Inputs-Source equivalent"},
+    {"id": "com.droidlogic", "why": "HDMI / SoC TV HAL"},
+    {"id": "com.android.providers.tv", "why": "TV input provider"},
+    {"id": "com.google.android.tv.remote.service", "why": "Google TV remote service"},
+    {"id": "com.mft.rcupair", "why": "Bluetooth remote pairing"},
+    {"id": "com.google.android.gms", "why": "Play Services"},
+    {"id": "com.google.android.gsf", "why": "Google services framework"},
+    {"id": "com.android.vending", "why": "Play Store"},
+    {"id": "com.android.location.fused", "why": "Disabling this can boot-loop"},
+    {"id": "com.google.android.inputmethod.latin", "why": "On-screen keyboard"},
+    {"id": "com.android.inputdevices", "why": "Input devices"},
+    {"id": "com.sdt.projector.observer", "why": "Projector hardware observer"},
+    {"id": "com.sdt.frontpanelledsservice", "why": "Front-panel LEDs"},
+    {"id": "com.mtf.tvsettingadapt", "why": "Vendor settings adapter"},
+    {"id": "com.android.tv.settings", "why": "Settings"},
+    {"id": "com.droidlogic.tv.settings", "why": "Vendor settings"},
+    {"id": "com.dolby.android.audio.service", "why": "Dolby audio"},
+    {"id": "com.android.systemui", "why": "System UI"},
+    {"id": "com.google.android.permissioncontroller", "why": "Permissions"},
+    {"id": "com.google.android.webview", "why": "WebView"},
+    {"id": "com.android.bluetooth", "why": "Bluetooth"},
+    {"id": "com.google.android.youtube.tv", "why": "YouTube"},
+    {"id": "com.google.android.apps.mediashell", "why": "Chromecast (kept on this unit)"},
+    {"id": "com.sdt.ota", "why": "Firmware OTA"},
+    {"id": "com.sdt.upgrade", "why": "Firmware upgrade"}
+  ],
+  "protected_substrings": ["inputmethod"],
+  "launcher": {
+    "google": "com.google.android.tvlauncher",
+    "replacement": "me.efesser.flauncher",
+    "why": "Disabling Google home before FLauncher is installed and set as home leaves a black screen"
+  },
+  "batches": [
+    {
+      "id": "factory-leftovers",
+      "title": "Factory leftovers, setup wizards, screensavers",
+      "packages": [
+        {"id": "com.sdt.producttest", "why": "Skyworth factory hardware test"},
+        {"id": "com.oem.qa", "why": "OEM QA / factory debug"},
+        {"id": "com.oemservice", "why": "OEM service leftover"},
+        {"id": "com.google.android.tungsten.setupwraith", "why": "Google TV setup wizard leftover"},
+        {"id": "com.google.android.partnersetup", "why": "Partner setup leftover"},
+        {"id": "com.google.android.onetimeinitializer", "why": "One-time Google init leftover"},
+        {"id": "com.google.android.feedback", "why": "Crash/feedback reporter"},
+        {"id": "com.android.tv.feedbackconsent", "why": "Feedback consent"},
+        {"id": "com.android.dreams.basic", "why": "Basic screensaver"},
+        {"id": "com.google.android.backdrop", "why": "Backdrop screensaver"}
+      ]
+    },
+    {
+      "id": "ads-telemetry",
+      "title": "Recommendation ads, telemetry, unused Health/Calendar/Print, Netflix",
+      "packages": [
+        {"id": "com.google.android.tvrecommendations", "why": "Home-screen recommendation/ad rows"},
+        {"id": "com.android.federatedcompute.services", "why": "Federated learning / telemetry"},
+        {"id": "com.android.adservices.api", "why": "Privacy Sandbox ads API"},
+        {"id": "com.android.ondevicepersonalization.services", "why": "On-device ads personalization"},
+        {"id": "com.android.healthconnect.controller", "why": "Health Connect UI"},
+        {"id": "com.android.health.connect.backuprestore", "why": "Health Connect backup"},
+        {"id": "com.google.android.syncadapters.calendar", "why": "Calendar sync"},
+        {"id": "com.android.printspooler", "why": "Print service"},
+        {"id": "android.autoinstalls.config.AMLSTBAndroid.device", "why": "Partner auto-install stub"},
+        {"id": "com.netflix.ninja", "why": "Netflix (unused on this unit)"}
+      ]
+    },
+    {
+      "id": "unused-apps",
+      "title": "Unused assistant/streaming apps",
+      "packages": [
+        {"id": "com.google.android.katniss", "why": "Google Assistant"},
+        {"id": "com.google.android.tts", "why": "Text-to-speech"},
+        {"id": "com.google.android.videos", "why": "Google TV / Play Movies"},
+        {"id": "com.google.android.youtube.tvmusic", "why": "YouTube Music"},
+        {"id": "com.sling", "why": "Sling TV"},
+        {"id": "com.google.android.play.games", "why": "Play Games"},
+        {"id": "com.google.android.marvin.talkback", "why": "TalkBack"},
+        {"id": "com.amlogic.voicesubtitle", "why": "Live captions"},
+        {"id": "com.netflix.tokenmanager", "why": "Netflix token helper"},
+        {"id": "com.amazon.amazonvideo.livingroom", "why": "Prime Video"}
+      ]
+    }
+  ]
+}

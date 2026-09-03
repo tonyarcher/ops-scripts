@@ -14,6 +14,7 @@ sites/        ad-hoc admin tools grouped by product
 config/       example configs only — never real secrets
 docs/         longer notes when a README section is not enough
 dotfiles/     shell dotfiles + installer (bash/, setup.sh) for Ubuntu/WSL
+windows/      Windows-only admin scripts (PowerShell). Keep out of the Linux trees.
 ```
 
 ## Conventions
@@ -26,6 +27,7 @@ These are meant to scale to ~100 scripts:
 - Each script should be runnable on its own; put shared code in `lib/`.
 - Website / API work: TypeScript on Bun (`bun run path/to/script.ts`) or Node ≥23.6 native TS (`node path/to/script.ts`).
 - Local files, reports, SSH, and shell glue: Python 3 (`python path/to/script.py`).
+- Windows services / PnP / audio: PowerShell under `windows/` (`powershell -File windows/scripts/…`).
 - Secrets via environment variables or an untracked `.env` — never committed.
 - Prefer a short comment block at the top of a script over a separate README unless usage is non-obvious.
 
@@ -55,5 +57,7 @@ Agents: see `AGENTS.md`.
 - `importers/mastodon/follow-hashtags/` — bulk-follow Mastodon hashtags from a file, another account's followed_tags, and/or trending tags. TypeScript, dry-run by default.
 - `sites/opencode/config-generator/` — interactive wizard that generates a project or global opencode.json: model picker fed by `opencode models`, agent editor, validation via `opencode debug config`, backup before replace. Python.
 - `dotfiles/` — the shell dotfiles and installer (merged from the `dotfiles` repo). See `dotfiles/README.md`; run `bash dotfiles/setup.sh` from the repo to install.
+- `windows/scripts/restart-audio.ps1` — recycle the ROG Cirrus speaker amp, Realtek codec, and Windows Audio when speakers die and a tinny motherboard device takes over. PowerShell, self-elevates.
+- `sites/android-tv/` — ADB debloat for the Magicubic HY300 / Skyworth stick. Disable-user only, dry-run default, protected-package guards. Python.
 
 Repo: https://github.com/tonyarcher/ops-scripts
