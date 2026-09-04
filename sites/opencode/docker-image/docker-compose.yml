@@ -1,0 +1,69 @@
+# opencode docker-compose — dev container for Node (Java opt-in)
+#
+# Usage:
+#   cp .env.example .env   # fill provider keys
+#   docker compose up --build -d
+#   docker compose exec opencode bash
+#
+# Or use ./deploy.sh which wraps the same steps with checks.
+#
+# Secrets: never committed. .env is gitignored; .env.example is the template.
+# Mounts:
+#   - ../../..:/workspace  -> the ops-scripts repo (adjust if you reuse elsewhere)
+#   - opencode-data        -> persists opencode sqlite/db across restarts
+#   - optional bind of ~/.config/opencode if you want host auth inside
+
+services:
+  opencode:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NODE_VERSION: ${NODE_VERSION:-24}
+        WITH_JAVA: ${WITH_JAVA:-false}
+        WITH_BUN: ${WITH_BUN:-true}
+    image: ops-opencode:latest
+    container_name: ops-opencode
+    stdin_open: true
+    tty: true
+    # keep running for `exec` workflows; override with `command: opencode`
+    command: /bin/bash
+
+    env_file:
+      - path: .env
+        required: false
+
+    environment:
+      # passed through if set on host/.env; blank is fine
+      - NODE_ENV=${NODE_ENV:-development}
+      - TERM=xterm-256color
+
+    volumes:
+      # Mount the whole ops-scripts repo as workspace.
+      # If you reuse this image for another app, override with:
+      #   volumes: ["../my-app:/workspace:cached"]
+      - ../../..:/workspace:cached
+      # Persist opencode state (sessions, db). Remove if you want ephemeral.
+      - opencode-data:/home/dev/.local/share/opencode
+      # Uncomment to reuse host opencode auth/config directly (read-only):
+      # - ~/.config/opencode:/home/dev/.config/opencode:ro
+      # - ~/.local/share/opencode:/home/dev/.local/share/opencode:ro
+
+    ports:
+      # common dev ports — change or remove per app
+      - "${PORT_3000:-3000}:3000"
+      - "${PORT_5173:-5173}:5173"
+      - "${PORT_8080:-8080}:8080"
+      - "${PORT_8000:-8000}:8000"
+      # opencode serve (if you run `opencode serve`)
+      - "${PORT_4096:-4096}:4096"
+
+    # If you need docker-in-docker (agent runs `docker build`), mount the host daemon:
+    # volumes:
+    #   - /var/run/docker.sock:/var/run/docker.sock
+
+    restart: unless-stopped
+
+volumes:
+  opencode-data:
+    name: ops-opencode-data

@@ -1,0 +1,6 @@
+# local secrets and build cruft — never sent to daemon
+.env
+*.log
+tmp/
+var/
+.git
