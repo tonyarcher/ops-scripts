@@ -13,6 +13,7 @@
 #
 # Secrets: never baked. Pass provider keys at runtime via --env-file .env
 #   (XAI_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, OPENCODE_GO_API_KEY, etc.)
+# Build locally (`compose up --build`). Do not docker push / use a registry.
 # See README.md and .env.example.
 
 ARG NODE_VERSION=24
@@ -21,9 +22,9 @@ ARG WITH_BUN=true
 
 FROM ubuntu:24.04 AS base
 
-ARG NODE_VERSION
-ARG WITH_JAVA
-ARG WITH_BUN
+ARG NODE_VERSION=24
+ARG WITH_JAVA=false
+ARG WITH_BUN=true
 
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
@@ -54,17 +55,23 @@ RUN curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash - \
     && apt-get update && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/* \
     && node --version && npm --version \
-    # pnpm + yarn via corepack, plus bun
+    # pnpm + yarn via corepack
     && corepack enable \
     && corepack prepare pnpm@latest --activate \
     && corepack prepare yarn@stable --activate \
     && npm install -g npm@latest
 
-# Bun (optional, fast for TS/HTTP jobs per AGENTS.md)
+# Bun (optional, fast for TS/HTTP jobs per AGENTS.md).
+# BUN_INSTALL=/usr/local puts the binary on the default PATH for root and dev.
+# Prepending that bin dir makes the installer skip writing shell rc files.
 RUN if [ "$WITH_BUN" = "true" ]; then \
-      curl -fsSL https://bun.sh/install | bash \
-      && mv /root/.bun/bin/bun /usr/local/bin/bun \
-      && rm -rf /root/.bun \
+      export BUN_INSTALL=/usr/local \
+      && mkdir -p "$BUN_INSTALL/bin" \
+      && export PATH="$BUN_INSTALL/bin:$PATH" \
+      && curl -fsSL https://bun.sh/install -o /tmp/install-bun.sh \
+      && bash /tmp/install-bun.sh \
+      && rm -f /tmp/install-bun.sh \
+      && ln -sf bun /usr/local/bin/bunx \
       && bun --version; \
     fi
 

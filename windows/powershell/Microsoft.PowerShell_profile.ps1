@@ -11,7 +11,8 @@
 #    profile-prompt.ps1     -> git-aware prompt with exit-code marker
 #
 #  Rule of thumb: a *variable* or *PATH* entry goes in profile-env.ps1.
-#  A *shortcut* goes in profile-aliases.ps1. Never edit this hub.
+#  A *shortcut* goes in profile-aliases.ps1. Keep this hub tiny; the Misc
+#  defaults section may hold session rules (editor, start directory).
 # =============================================================================
 
 Set-StrictMode -Version Latest
@@ -55,5 +56,19 @@ if (Get-Command zoxide -ErrorAction SilentlyContinue) {
 # --- Misc defaults ------------------------------------------------------------------
 if (-not $env:EDITOR) { $env:EDITOR = 'notepad' }
 if (-not $env:PAGER) { $env:PAGER = 'more' }
+
+# Start in $HOME when the host dumped us in System32 / SysWOW64 / the Start
+# Menu folder (empty shortcut "Start in", or Run as administrator). Skip on
+# profile reload and when the session already has a real CWD (Explorer
+# "Open here", Windows Terminal startingDirectory, IDE terminals).
+# Launcher-side default: windows/scripts/set-powershell-start-home.ps1
+if (-not (Get-Variable PROFILE_HUB_LOADED -ValueOnly -ErrorAction SilentlyContinue)) {
+    $here = (Get-Location).Path
+    $sys32 = [Environment]::SystemDirectory
+    $syswow = Join-Path $env:SystemRoot 'SysWOW64'
+    if ($here -eq $sys32 -or $here -eq $syswow -or $here -like '*\Start Menu\Programs*') {
+        Set-Location $HOME
+    }
+}
 
 $PROFILE_HUB_LOADED = 'yes'

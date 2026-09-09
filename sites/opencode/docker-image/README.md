@@ -74,10 +74,10 @@ docker compose -f sites/opencode/docker-image/docker-compose.yml logs -f
 
 Leave unused vars blank. `docker-compose.yml` uses `env_file: .env` so every key in `.env` becomes an env var in the container. You can also `export XAI_API_KEY=...` before `deploy.sh` — it will be picked up.
 
-To confirm what the container sees:
+To confirm which secret *names* the container has (values stay hidden):
 
 ```bash
-docker compose -f sites/opencode/docker-image/docker-compose.yml exec opencode env | sort | grep -E 'API_KEY|GITHUB'
+docker compose -f sites/opencode/docker-image/docker-compose.yml exec opencode env | cut -d= -f1 | grep -E 'API_KEY|TOKEN|GITHUB' | sort
 ```
 
 Add new secrets to `config/examples/.env.example` as well if they apply broadly.
@@ -117,6 +117,10 @@ powershell -File windows/scripts/deploy-opencode-docker.ps1 -WithJava -Command b
 ```
 
 This adds `openjdk-21-jdk`, `maven`, `gradle`. Disable again with `WITH_JAVA=false` and rebuild to slim back down.
+
+### Bun
+
+Bun is on by default (`WITH_BUN=true`) and lands at `/usr/local/bin/bun`. Turn it off with `WITH_BUN=false` and rebuild.
 
 ### Add CLI tools
 
@@ -189,7 +193,7 @@ bash sites/opencode/docker-image/deploy.sh --help
 powershell -NoProfile -Command "Get-Help windows/scripts/deploy-opencode-docker.ps1 -Full"
 
 # quick container smoke test
-docker compose -f sites/opencode/docker-image/docker-compose.yml run --rm opencode bash -c "node --version; npm --version; opencode --version; rg --version; fd --version; jq --version"
+docker compose -f sites/opencode/docker-image/docker-compose.yml run --rm opencode bash -c "node --version; npm --version; bun --version; opencode --version; rg --version; fd --version; jq --version"
 ```
 
 ## Troubleshooting

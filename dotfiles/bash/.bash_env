@@ -72,6 +72,14 @@ if [ -s "$NVM_DIR/nvm.sh" ]; then
 fi
 
 # ---------------------------------------------------------------------------
+#  Bun (preferred TypeScript runner for ops-scripts)
+#  --------------------------------------------------------------------------
+if [ -d "${BUN_INSTALL:-$HOME/.bun}/bin" ]; then
+    export BUN_INSTALL="${BUN_INSTALL:-$HOME/.bun}"
+    export PATH="$BUN_INSTALL/bin:$PATH"
+fi
+
+# ---------------------------------------------------------------------------
 #  Python / Ruby / other languages
 #  --------------------------------------------------------------------------
 # pip --user and pipx put binaries here
@@ -81,12 +89,16 @@ export PATH="$HOME/.local/bin:$PATH"
 # export PATH="$HOME/.rbenv/bin:$PATH"
 # eval "$(rbenv init - bash 2>/dev/null)" || true
 
-# Go
-# export GOPATH="$HOME/go"
-# export PATH="$GOPATH/bin:$PATH"
+# Go (setup.sh --install-tools). Binaries from `go install` land here.
+if [ -d "${GOPATH:-$HOME/go}/bin" ]; then
+    export GOPATH="${GOPATH:-$HOME/go}"
+    export PATH="$GOPATH/bin:$PATH"
+fi
 
-# Rust (cargo)
-# export PATH="$HOME/.cargo/bin:$PATH"
+# Rust (rustup / cargo)
+if [ -d "$HOME/.cargo/bin" ]; then
+    export PATH="$HOME/.cargo/bin:$PATH"
+fi
 
 # ---------------------------------------------------------------------------
 #  YOUR personal PATH entries -- the "always works" pattern
