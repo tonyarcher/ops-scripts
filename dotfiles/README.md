@@ -9,6 +9,8 @@ it does and where to change things.
 ```
 dotfiles/
 ├── setup.sh            installer: backs up your current files, installs these
+├── install-agents.py   user-wide AGENTS.md → ~/.config/agents + OpenCode pointer (symlink, copy fallback)
+├── agents/AGENTS.md    canonical user-wide agent instructions
 ├── bash/
 │   ├── .bashrc         the "hub" -- sources everything below (edit rarely)
 │   ├── .bash_env       ENVIRONMENT VARIABLES & PATH  (JAVA_HOME, ...)   <-- you will edit this
@@ -36,7 +38,7 @@ source ~/.bashrc         # or just open a new terminal
 Optionally install the recommended tools the config knows how to use:
 
 ```bash
-bash setup.sh --install-tools   # ripgrep, eza, fzf, zoxide, htop, jq, tree, bat, fd-find...
+bash setup.sh --install-tools   # ripgrep, eza, fzf, zoxide, htop, jq, tree, bat, fd-find, bun, go, jdk, uv, rustup...
 ```
 
 Your previous `~/.bashrc`, `~/.bash_env`, etc. are never lost: they land in
@@ -45,7 +47,7 @@ Your previous `~/.bashrc`, `~/.bash_env`, etc. are never lost: they land in
 ## Where to put environment variables (PATH, JAVA_HOME, ...)
 
 **Everything goes in `~/.bash_env`.** Open that file; it has worked, commented
-examples for JAVA_HOME, Maven, Node/nvm, Go, Rust, Android and your own PATH
+examples for JAVA_HOME, Maven, Node/nvm, Bun, Go, Rust, Android and your own PATH
 entries. Below is the same information in prose.
 
 ### PATH in one paragraph

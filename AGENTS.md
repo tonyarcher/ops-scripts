@@ -43,11 +43,14 @@ Rules:
 
 ### Python
 
-- Target current CPython 3. Target the stdlib first (`pathlib`, `json`, `csv`, `subprocess`, `argparse`, `urllib` only if you must — prefer not using Python for HTTP).
+- Target current CPython 3. Type hints on every public function. `from __future__ import annotations`.
+- Target the stdlib first (`pathlib`, `json`, `csv`, `subprocess`, `argparse`, `urllib` only if you must — prefer not using Python for HTTP).
 - If the job is SSH or remote shell, use `subprocess` with an explicit argv list, never `shell=True` with interpolated strings.
+- Lint: `ruff check` / `ruff format`. Complexity `C901` ≤ 15; functions ≤ ~30 lines. `mypy --strict` when the script is more than a one-liner.
 - Shared Python helpers go in `lib/` (e.g. `lib/sshutil.py`).
 - No `requirements.txt` for a one-file stdlib script. If a script truly needs a package, put a pinned `requirements.txt` next to that script only.
 - Header comment plus `argparse` (or a few `sys.argv` checks) so a human can run it without reading the whole file.
+- Go or Rust only for a compiled binary / real concurrency need, never for a new importer. No Kotlin/Gradle in this repo.
 
 ## Layout
 
@@ -79,7 +82,7 @@ Conventions:
 - One directory per script when it has extras. A lone file is fine for a true one-liner.
 - Each script must be runnable on its own. Shared code lives in `lib/`, not copy-pasted.
 - Prefer a short header comment over a per-script README unless usage is non-obvious.
-- Config examples go in `config/examples/`. Real values stay in an untracked `.env` or the process environment.
+- Config examples go in `config/examples/.env.example`. Real values stay in an untracked `.env` beside the script or in the process environment. User-wide secret rules apply (never commit/push `.env`).
 
 ## Adding a script
 
@@ -103,7 +106,7 @@ Conventions:
 ## What not to do
 
 - Do not add npm toolchains, ts-node, or tsx. Bun or Node native TS runs the TypeScript.
-- Do not introduce Kotlin, Gradle, or Maven for new work.
+- Do not introduce Kotlin, Gradle, or Maven for new work. User-wide JVM rules do not apply here.
 - Do not create empty sample scripts to “fill out” the tree.
 - Do not add CI, Docker, or a monorepo workspace unless asked.
 - Do not commit `node_modules/`, `.venv/`, or IDE junk.

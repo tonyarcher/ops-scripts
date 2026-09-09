@@ -1,6 +1,7 @@
 # Windows dev-tool installer. Mirrors `dotfiles/setup.sh --install-tools`
-# (ripgrep, eza, fzf, zoxide, jq, bat, fd, 7zip) plus the AI/power-user
-# extras proven on this box: gh, pwsh 7, lazygit, uv, opencode, ffmpeg.
+# (ripgrep, eza, fzf, zoxide, jq, bat, fd, 7zip) plus vim and the AI/power-user
+# extras proven on this box: gh, pwsh 7, lazygit, uv, opencode, ffmpeg, Go,
+# JDK 21, rustup. Also installs the user-wide AGENTS.md pointer (symlink or copy).
 #
 # Idempotent: installed tools are skipped (winget also no-ops on them).
 # Needs no admin for user-scope installs; winget self-elevates per package
@@ -44,7 +45,13 @@ $Tools = @(
     @{ Id = 'astral-sh.uv'; Cmd = 'uv' }
     @{ Id = 'SST.opencode'; Cmd = 'opencode' }
     @{ Id = 'Gyan.FFmpeg'; Cmd = 'ffmpeg' }
+    @{ Id = 'vim.vim'; Cmd = 'vim' }
+    @{ Id = 'GoLang.Go'; Cmd = 'go' }
+    @{ Id = 'Microsoft.OpenJDK.21'; Cmd = 'java' }
+    @{ Id = 'Rustlang.Rustup'; Cmd = 'rustup' }
 )
+
+$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 
 function Update-SessionPath {
     # winget edits the registry PATH; refresh this process so just-installed
@@ -122,6 +129,51 @@ function Install-Fzf {
     }
 }
 
+function Install-UvTools {
+    if (-not (Test-ToolUsable 'uv')) {
+        Write-Host '    skip: uv not on PATH'
+        return
+    }
+    foreach ($pkg in @('ruff', 'mypy')) {
+        if ((-not $Force) -and (Test-ToolUsable $pkg)) {
+            Write-Host "    already have $pkg -- skip"
+            continue
+        }
+        if ($DryRun) {
+            Write-Host "    would uv tool install $pkg"
+            continue
+        }
+        uv tool install $pkg
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "    FAIL uv tool install $pkg : exit $LASTEXITCODE"
+        } else {
+            Write-Host "    installed $pkg (uv tool)"
+        }
+    }
+}
+
+function Install-AgentsMd {
+    $script = Join-Path $RepoRoot 'dotfiles\install-agents.py'
+    $pyArgs = @($script)
+    if ($DryRun) { $pyArgs += '--dry-run' }
+    if ($Force) { $pyArgs += '--force' }
+    if (Test-ToolUsable 'python') {
+        & python @pyArgs
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "    FAIL install-agents.py : python exit $LASTEXITCODE"
+        }
+        return
+    }
+    if (Get-Command py -ErrorAction SilentlyContinue) {
+        & py -3 @pyArgs
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "    FAIL install-agents.py : py -3 exit $LASTEXITCODE"
+        }
+        return
+    }
+    Write-Host '    FAIL: python not on PATH (install Python first)'
+}
+
 if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
     Write-Error 'winget not found -- install App Installer from the Microsoft Store first.'
     exit 1
@@ -134,6 +186,12 @@ foreach ($t in $Tools) {
 
 Write-Host '==> fzf (winget, go-build fallback)'
 Install-Fzf
+
+Write-Host '==> python tools (ruff, mypy) via uv'
+Install-UvTools
+
+Write-Host '==> user-wide AGENTS.md (OpenCode pointer)'
+Install-AgentsMd
 
 Write-Host 'Done. Restart the shell so the new PATH entries take effect.'
 Write-Host 'Then run windows/scripts/install-profile.ps1 for the PowerShell profile.'

@@ -56,8 +56,9 @@ Agents: see `AGENTS.md`.
 
 - `importers/mastodon/follow-hashtags/` — bulk-follow Mastodon hashtags from a file, another account's followed_tags, and/or trending tags. TypeScript, dry-run by default.
 - `sites/opencode/config-generator/` — interactive wizard that generates a project or global opencode.json: model picker fed by `opencode models`, agent editor, validation via `opencode debug config`, backup before replace. Python.
-- `dotfiles/` — the shell dotfiles and installer (merged from the `dotfiles` repo). See `dotfiles/README.md`; run `bash dotfiles/setup.sh` from the repo to install.
+- `dotfiles/` — the shell dotfiles and installer (merged from the `dotfiles` repo). See `dotfiles/README.md`; run `bash dotfiles/setup.sh` from the repo to install. Always installs user-wide `AGENTS.md` (`~/.config/agents/AGENTS.md`, OpenCode pointer at `~/.config/opencode/AGENTS.md` — symlink, copy fallback).
 - `windows/` — Windows setup + admin scripts. See `windows/README.md`; run `windows/scripts/install-tools.ps1` then `windows/scripts/install-profile.ps1` from the repo root.
+- `windows/scripts/set-powershell-start-home.ps1` — make PowerShell / pwsh open in the user home directory (shortcuts + Windows Terminal). Profile fallback cds out of System32.
 - `windows/scripts/restart-audio.ps1` — recycle the ROG Cirrus speaker amp, Realtek codec, and Windows Audio when speakers die and a tinny motherboard device takes over. PowerShell, self-elevates.
 - `sites/android-tv/` — ADB debloat for the Magicubic HY300 / Skyworth stick. Disable-user only, dry-run default, protected-package guards. Python.
 
