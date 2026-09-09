@@ -61,5 +61,6 @@ Agents: see `AGENTS.md`.
 - `windows/scripts/set-powershell-start-home.ps1` — make PowerShell / pwsh open in the user home directory (shortcuts + Windows Terminal). Profile fallback cds out of System32.
 - `windows/scripts/restart-audio.ps1` — recycle the ROG Cirrus speaker amp, Realtek codec, and Windows Audio when speakers die and a tinny motherboard device takes over. PowerShell, self-elevates.
 - `sites/android-tv/` — ADB debloat for the Magicubic HY300 / Skyworth stick. Disable-user only, dry-run default, protected-package guards. Python.
+- `sites/vpn/` — WireGuard VPN + nginx tunnel-IP gateway (Compose) for a Linux instance. SSH over `10.13.13.1`. Clients: Windows / Linux / macOS.
 
 Repo: https://github.com/tonyarcher/ops-scripts

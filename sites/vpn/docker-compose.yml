@@ -1,0 +1,87 @@
+# WireGuard VPN + nginx port-forward gateway for a Linux instance.
+#
+# Usage:
+#   cp .env.example .env
+#   ./deploy.sh check
+#   ./deploy.sh up
+#
+# Host network: wg0 lands on the host so `ssh user@10.13.13.1` hits host sshd.
+# Only UDP WG_LISTEN_PORT needs a hole in the provider firewall.
+# HTTP/HTTPS exit is NAT (WG_FULL_TUNNEL=true), not public :80/:443.
+# nginx binds the tunnel IP only. See stream.d/*.example for TCP forwards.
+#
+# Build locally on the engine that will run this. Do not docker push.
+
+name: ops-vpn
+
+services:
+  wireguard:
+    build:
+      context: .
+      dockerfile: wireguard/Dockerfile
+    image: ops-vpn-wireguard:local
+    container_name: ops-vpn-wireguard
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    devices:
+      - /dev/net/tun
+    volumes:
+      - ops-vpn-config:/config
+      - /lib/modules:/lib/modules:ro
+    environment:
+      WG_SERVER_ADDRESS: ${WG_SERVER_ADDRESS:-10.13.13.1/24}
+      WG_LISTEN_PORT: ${WG_LISTEN_PORT:-51820}
+      WG_TUN_IF: ${WG_TUN_IF:-wg0}
+      WG_PEERS: ${WG_PEERS:-laptop}
+      WG_FULL_TUNNEL: ${WG_FULL_TUNNEL:-false}
+      WG_CLIENT_ALLOWED_IPS: ${WG_CLIENT_ALLOWED_IPS:-}
+      WG_WAN_INTERFACE: ${WG_WAN_INTERFACE:-}
+      WG_PERSISTENT_KEEPALIVE: ${WG_PERSISTENT_KEEPALIVE:-25}
+      WG_CLIENT_DNS: ${WG_CLIENT_DNS:-}
+      WG_ENDPOINT: ${WG_ENDPOINT:-}
+      VPN_HOST: ${VPN_HOST:-replace_me}
+      WG_CONFIG_DIR: /config
+      HOST_SSH_PORT: ${HOST_SSH_PORT:-22}
+      WG_HTTP_PORT: ${WG_HTTP_PORT:-8080}
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 15s
+    healthcheck:
+      test: ["CMD-SHELL", "wg show ${WG_TUN_IF:-wg0} >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    image: ops-vpn-gateway:local
+    container_name: ops-vpn-gateway
+    network_mode: host
+    depends_on:
+      wireguard:
+        condition: service_healthy
+    environment:
+      WG_SERVER_ADDRESS: ${WG_SERVER_ADDRESS:-10.13.13.1/24}
+      WG_LISTEN_ADDR: ${WG_LISTEN_ADDR:-10.13.13.1}
+      WG_HTTP_PORT: ${WG_HTTP_PORT:-8080}
+    restart: unless-stopped
+    init: true
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS --max-time 3 http://${WG_LISTEN_ADDR:-10.13.13.1}:${WG_HTTP_PORT:-8080}/healthz",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+
+volumes:
+  ops-vpn-config:
+    name: ops-vpn-config

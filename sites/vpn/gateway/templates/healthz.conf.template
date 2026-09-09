@@ -1,0 +1,14 @@
+server {
+    listen ${LISTEN_ADDR}:${WG_HTTP_PORT} default_server;
+    server_name _;
+    server_tokens off;
+
+    location /healthz {
+        add_header Content-Type text/plain;
+        return 200 "ok\n";
+    }
+
+    location / {
+        return 404;
+    }
+}

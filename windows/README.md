@@ -15,6 +15,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File windows/scripts/install-tool
 powershell -NoProfile -ExecutionPolicy Bypass -File windows/scripts/install-profile.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File windows/scripts/set-powershell-start-home.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File windows/scripts/restart-audio.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File windows/scripts/deploy-ops-vpn.ps1 --remote up
+powershell -NoProfile -ExecutionPolicy Bypass -File windows/scripts/connect-ops-vpn.ps1 -Config .\laptop.conf
 ```
 
 `install-tools.ps1` takes `-DryRun` (list only) and `-Force` (reinstall all).

@@ -8,6 +8,22 @@ OpenCode loads `~/.config/opencode/AGENTS.md`. Setup symlinks that path to
 this canonical file (`%APPDATA%\agents\AGENTS.md` on Windows,
 `~/.config/agents/AGENTS.md` on Linux).
 
+## How to write to me
+
+This section is **personal**. Do not copy it into a project `AGENTS.md`. Project
+files hold architecture, commands, and code rules only.
+
+Write in the spirit of Simplified Technical English (ASD-STE100). You do not
+need the official dictionary.
+
+- Use short sentences. Put one idea in each sentence.
+- Use the same word for the same thing. Do not switch synonyms.
+- Use active voice. For procedures, use the imperative (`Do X`. `Do not Y`.).
+- Do not use filler, hype, or hedging (`maybe`, `basically`, `it is worth noting`).
+- Do not repeat what I already know unless I ask.
+- Keep technical names as the project writes them (`rss-api`, `compose`, `X-Request-ID`).
+- If you are not sure, say so in one sentence. Then ask or stop.
+
 ## Workflow
 
 - Read the workspace `AGENTS.md` before editing that tree.
@@ -106,6 +122,49 @@ library that must be safe to embed — not as a default CLI language (that is Go
   with a real need (don’t add tokio because a script sleeps once).
 - `unsafe` requires a comment on the invariant. Edition 2024 (or the crate’s
   current edition); don’t mix without a reason.
+
+## Logging
+
+No log warehouse required yet. **Stdout is the API** so Docker, Alloy, Loki, or
+VictoriaLogs can attach later without app changes. Do not add a logging SaaS
+or ship a sidecar until a project asks.
+
+**Daemons / HTTP APIs** (Node, Java, Go, Python services): one JSON object per
+line on stdout/stderr. Prefer OpenTelemetry-shaped names so traces glue on later.
+
+```json
+{"ts":"2026-09-09T17:00:00.000Z","level":"info","msg":"listening","service":"rss-api","port":3001}
+```
+
+| Field | When |
+| --- | --- |
+| `ts` | Always. UTC RFC3339 with milliseconds. |
+| `level` | Always. `debug` \| `info` \| `warn` \| `error`. Process death: `error` then exit. |
+| `msg` | Always. Short stable phrase, not an interpolated novel. |
+| `service` | Always. Compose service / binary name (`fitness-api`, `radio-api`). |
+| `request_id` | HTTP or any unit of work. Honor `X-Request-ID` or W3C `traceparent`; otherwise generate. Echo `X-Request-ID` on the response. |
+| `trace_id` / `span_id` | When a `traceparent` is present or you create a span. Hex, no dashes. |
+| `session_id` | When there is an authenticated session. Opaque id, **not** the cookie or token. |
+| `method` `path` `status` `duration_ms` | HTTP request summary (one line per request). |
+| `err` | On failure: `{ "type", "message" }`. Stack only at `debug` or for 5xx. |
+| extra keys | Event-specific (`port`, `feed_id`, …). Keep them scalar. |
+
+`LOG_LEVEL` env (default `info` in deploy, `debug` ok in dev). Drop records below the threshold. Do not use `console.log` for daemons once JSON logging exists.
+
+**Do not log:** tokens, cookies, passwords, `.env`, Authorization headers, raw request bodies, health-sample payloads, or query strings that carry secrets.
+
+**CLIs / one-shot scripts:** human text on stdout is fine; `error:` on stderr. JSON only if the process is long-running.
+
+**Language:**
+
+- TypeScript Node: a 20-line `log({level, msg, ...})` helper writing `JSON.stringify` + `\n`. No pino/winston unless the repo already has one.
+- Browser / Lit: `console` at the right level. Do not JSON-spam the user’s console; do not send client logs to a collector unless the project asks.
+- Python: `logging` with a JSON formatter for daemons; plain `print`/`logging` for CLIs.
+- Go: `log/slog` JSON handler. Put `request_id` on the context, not a global.
+- Java/Kotlin: SLF4J + JSON encoder (Logback/Log4j2). MDC: `request_id`, `trace_id`. No `System.out`.
+- nginx: keep access/error logs; don’t duplicate app request lines there.
+
+Correlation is **request/session/trace ids**, not OS thread ids (Node/Go don’t have a useful thread). Java may add `thread` in MDC if it helps; it is not a substitute for `request_id`.
 
 ## SQL
 

@@ -1,0 +1,14 @@
+# Example WireGuard client profile. Real files come from:
+#   ./deploy.sh peer laptop
+# Do not put real PrivateKey / PresharedKey values in git.
+#
+# [Interface]
+# PrivateKey = replace_me
+# Address = 10.13.13.2/32
+#
+# [Peer]
+# PublicKey = replace_me
+# PresharedKey = replace_me
+# Endpoint = 203.0.113.10:51820
+# AllowedIPs = 10.13.13.0/24
+# PersistentKeepalive = 25

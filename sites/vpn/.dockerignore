@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+.git
+*.md
+tests/
+tmp/
+var/
+**/__pycache__
+**/*.pyc
+*.log
+*.sock
+clients/

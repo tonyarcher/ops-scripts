@@ -101,6 +101,7 @@ Conventions:
 - Default to dry-run or a limit flag when a script writes to a remote site or deletes data.
 - Be a good guest: timeouts, retries with backoff, and a delay on bulk writes. No unbounded scrape loops.
 - Do not print secrets, even in debug output.
+- CLIs: human stdout, `error:` on stderr. Long-running daemons follow user-wide JSON logging (`ts`, `level`, `msg`, `service`). Never log tokens.
 - Do not open or attack systems the user did not name. These scripts run against the user's own sites and accounts.
 
 ## What not to do
