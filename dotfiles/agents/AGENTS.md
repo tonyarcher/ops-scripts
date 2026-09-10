@@ -81,6 +81,20 @@ Strict TypeScript, no `any`, no `!` except tests. Lit for UI unless the project
 says otherwise. Formatting and element prefixes live in the project file.
 Untrusted URLs go through an allow-list (`http:`/`https:`). Do not log tokens.
 
+## Async lifetime
+
+A timer or loop that outlives its owner is a leaked global, even if TypeScript
+has no `global` keyword. Closures over an app-wide store are the same bug.
+
+- The object that shows the work owns the loop. Use `AbortSignal`, Lit
+  `disconnectedCallback`, or Go `context.Context`.
+- Headless helpers compute the next step. They do not `setTimeout` / `play()`
+  against a store they do not own.
+- On dispose: abort first, then drop callbacks. Do not write into whatever the
+  store holds now.
+- After every `await`, recheck that the owner is still the same session
+  (`isConnected`, mode, generation).
+
 ## Python
 
 - Type hints on every public function and method. `from __future__ import annotations`.
