@@ -13,8 +13,8 @@ this canonical file (`%APPDATA%\agents\AGENTS.md` on Windows,
 This section is **personal**. Do not copy it into a project `AGENTS.md`. Project
 files hold architecture, commands, and code rules only.
 
-Write in the spirit of Simplified Technical English (ASD-STE100). You do not
-need the official dictionary.
+Write like [Google’s Developer Documentation Style Guide](https://developers.google.com/style).
+Keep STE habits: short sentences, one idea, same word, imperative procedures, no hedging.
 
 - Use short sentences. Put one idea in each sentence.
 - Use the same word for the same thing. Do not switch synonyms.
