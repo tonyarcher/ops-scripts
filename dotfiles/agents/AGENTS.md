@@ -33,6 +33,13 @@ need the official dictionary.
 - Dispatch `review` on the full uncommitted diff (including untracked) before
   calling the work done.
 
+## Reuse
+
+- Prefer a known algorithm or an existing tool over a custom one.
+- Search for the usual approach first (stdlib, the workspace, the project’s stack).
+- Do not invent a parser, retry/backoff, rate limiter, or protocol.
+- Do not add a dependency when stdlib or the stack already does the job.
+
 ## Language pick
 
 | Job | Language |
