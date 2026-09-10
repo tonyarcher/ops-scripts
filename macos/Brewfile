@@ -1,0 +1,27 @@
+# CLI tools for a Mac VPN/dev client. Mirrors windows/scripts/install-tools.ps1
+# plus wireguard-tools for sites/vpn/clients/connect.sh.
+# Not a CUDA host. Do not add NVIDIA, CUDA, or Docker Desktop here.
+# Rancher Desktop is documented in README.md; install it separately.
+
+brew "git"
+brew "node"
+brew "python"
+brew "gh"
+brew "ripgrep"
+brew "eza"
+brew "zoxide"
+brew "jq"
+brew "bat"
+brew "fd"
+brew "p7zip"
+brew "lazygit"
+brew "uv"
+brew "opencode"
+brew "ffmpeg"
+brew "vim"
+brew "go"
+brew "openjdk@21"
+brew "rustup"
+brew "fzf"
+brew "bun"
+brew "wireguard-tools"

@@ -1,6 +1,7 @@
 # windows/
 
 Windows-only admin scripts. The rest of this repo is Linux/WSL or OS-agnostic.
+macOS client bootstrap is `macos/`, not here.
 
 ```
 windows/

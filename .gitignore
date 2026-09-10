@@ -9,6 +9,9 @@
 !.env.*.example
 *.local.*
 
+# Host inventory (SSH targets). Keep the example.
+sites/hosts/hosts.json
+
 # OS junk
 .DS_Store
 Thumbs.db

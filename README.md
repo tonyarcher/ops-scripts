@@ -15,6 +15,7 @@ config/       example configs only — never real secrets
 docs/         longer notes when a README section is not enough
 dotfiles/     shell dotfiles + installer (bash/, setup.sh) for Ubuntu/WSL
 windows/      Windows-only admin scripts (PowerShell). Keep out of the Linux trees.
+macos/        macOS client bootstrap (Homebrew). Not a CUDA/CAD host.
 ```
 
 ## Conventions
@@ -28,6 +29,7 @@ These are meant to scale to ~100 scripts:
 - Website / API work: TypeScript on Bun (`bun run path/to/script.ts`) or Node ≥23.6 native TS (`node path/to/script.ts`).
 - Local files, reports, SSH, and shell glue: Python 3 (`python path/to/script.py`).
 - Windows services / PnP / audio: PowerShell under `windows/` (`powershell -File windows/scripts/…`).
+- macOS client tools: Homebrew under `macos/` (`bash macos/install-tools.sh`).
 - Secrets via environment variables or an untracked `.env` — never committed.
 - Prefer a short comment block at the top of a script over a separate README unless usage is non-obvious.
 
@@ -63,5 +65,7 @@ Agents: see `AGENTS.md`.
 - `windows/scripts/restart-audio.ps1` — recycle the ROG Cirrus speaker amp, Realtek codec, and Windows Audio when speakers die and a tinny motherboard device takes over. PowerShell, self-elevates.
 - `sites/android-tv/` — ADB debloat for the Magicubic HY300 / Skyworth stick. Disable-user only, dry-run default, protected-package guards. Python.
 - `sites/vpn/` — WireGuard VPN + nginx tunnel-IP gateway (Compose) for a Linux instance. SSH over `10.13.13.1`. Clients: Windows / Linux / macOS.
+- `sites/hosts/` — named SSH/Docker inventory (`vpn-gw`, `gpu-1`, `cad-ws`). Copy `hosts.example.json` to `hosts.json`. Python.
+- `macos/` — Mac client bootstrap (Homebrew Brewfile + AGENTS.md). Not a CUDA host. See `macos/README.md`; run `bash macos/install-tools.sh`.
 
 Repo: https://github.com/tonyarcher/ops-scripts
