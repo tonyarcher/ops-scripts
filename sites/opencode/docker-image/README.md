@@ -141,9 +141,9 @@ bash sites/opencode/docker-image/deploy.sh build
 
 ### Add a baked opencode config
 
-By default the image has no baked `opencode.json` — you mount the repo (`../../..:/workspace`) and the container reads `opencode.json` from the workspace or from `~/.config/opencode`. To bake a default:
+By default the image has no baked `opencode.json` — you mount the repo (`../../..:/workspace`) and the container reads `~/.config/opencode/opencode.json`. Do not put `opencode.json` at the repo root; OpenCode would treat it as project config. The install seed is `sites/opencode/config-generator/opencode.json.example`. To bake a default:
 
-1. Put `opencode.json` next to the `Dockerfile`.
+1. Copy `sites/opencode/config-generator/opencode.json.example` next to the `Dockerfile` as `opencode.json`.
 2. Uncomment in `Dockerfile`:
 
    ```dockerfile

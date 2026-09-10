@@ -4,7 +4,8 @@
 Walks you through picking a small_model, default_agent, and editing the agent
 list, then validates the result with `opencode debug config` before writing.
 Existing configs are parsed as JSONC (comments allowed) and merged on top of
-default-agents.json; replaced files are backed up first.
+opencode.json.example (copy of the global install seed). Replaced files are
+backed up first.
 
 Run:  python sites/opencode/config-generator/generate-config.py [--global] [--dir PATH] [--dry-run]
 
@@ -33,6 +34,8 @@ else:
     import tty
 
 CONFIG_SCHEMA = "https://opencode.ai/config.json"
+HERE = Path(__file__).resolve().parent
+SEED_PATH = HERE / "opencode.json.example"
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 
 
@@ -393,6 +396,25 @@ def multiline_input(label, current):
     return "\n".join(lines)
 
 
+def agent_block(config):
+    """Return the agents map. Prefer V2 `agents` over V1 `agent`."""
+    agents = config.get("agents")
+    if isinstance(agents, dict):
+        return agents
+    legacy = config.get("agent")
+    if isinstance(legacy, dict):
+        return legacy
+    config["agents"] = {}
+    return config["agents"]
+
+
+def system_field(agent):
+    """V2 uses `system`; older seeds used `prompt`."""
+    if "system" in agent:
+        return "system"
+    return "prompt"
+
+
 def print_agent_summary(name, agent):
     print(f"--- agent: {name} ---")
     print(f"  mode: {agent.get('mode', '(unset)')}")
@@ -409,10 +431,12 @@ def print_agent_summary(name, agent):
 
 
 def edit_one_agent(config, name, models):
-    agent = config["agent"][name]
+    agents = agent_block(config)
+    agent = agents[name]
+    field = system_field(agent)
     print_agent_summary(name, agent)
     choice = input(
-        f"[{name}] [1] keep  [2] edit model  [3] edit description  [4] edit prompt  [5] remove (Enter=keep): "
+        f"[{name}] [1] keep  [2] edit model  [3] edit description  [4] edit {field}  [5] remove (Enter=keep): "
     ).strip()
     if choice in ("", "1"):
         return
@@ -425,32 +449,33 @@ def edit_one_agent(config, name, models):
         if description is not None:
             agent["description"] = description
     elif choice == "4":
-        prompt = multiline_input("prompt", agent.get("prompt"))
-        if prompt is not None:
-            agent["prompt"] = prompt
+        text = multiline_input(field, agent.get(field))
+        if text is not None:
+            agent[field] = text
     elif choice == "5":
         confirm = input(f"remove agent '{name}'? [y/N]: ").strip().lower()
         if confirm == "y":
-            del config["agent"][name]
+            del agents[name]
     else:
         print("invalid choice")
 
 
 def edit_agents(config, models):
     while True:
-        for name in list(config.get("agent", {}).keys()):
-            if name in config["agent"]:
+        agents = agent_block(config)
+        for name in list(agents.keys()):
+            if name in agents:
                 edit_one_agent(config, name, models)
         answer = input("edit another agent? (number/name, blank to continue): ").strip()
         if answer == "":
             break
-        names = list(config.get("agent", {}).keys())
+        names = list(agent_block(config).keys())
         if answer.isdigit():
             idx = int(answer) - 1
             if 0 <= idx < len(names):
                 edit_one_agent(config, names[idx], models)
                 continue
-        elif answer in config.get("agent", {}):
+        elif answer in agent_block(config):
             edit_one_agent(config, answer, models)
             continue
         print("no such agent")
@@ -466,7 +491,7 @@ def add_custom_agents(config, models):
             if not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", name):
                 print("name must be kebab-case (lowercase letters, digits, single hyphens)")
                 continue
-            if name in config.get("agent", {}):
+            if name in agent_block(config):
                 print("an agent with that name already exists")
                 continue
             break
@@ -482,13 +507,13 @@ def add_custom_agents(config, models):
             print("no model selected; skipping this agent")
             continue
         description = input("description (single line, Enter for none): ").strip()
-        prompt = multiline_input("prompt", None)
+        prompt = multiline_input("system", None)
         agent = {"mode": mode, "model": picked}
         if description:
             agent["description"] = description
         if prompt:
-            agent["prompt"] = prompt
-        config.setdefault("agent", {})[name] = agent
+            agent["system"] = prompt
+        agent_block(config)[name] = agent
 
 
 def build_output(config, schema):
@@ -514,15 +539,15 @@ def validate_layer1(config):
             problems.append("small_model must be a string containing '/'")
     default_agent = config.get("default_agent")
     if default_agent is not None:
-        agents = config.get("agent") or {}
-        if not isinstance(agents, dict) or default_agent not in agents:
+        agents = agent_block(config)
+        if default_agent not in agents:
             problems.append(f"default_agent '{default_agent}' is not a defined agent")
         elif agents[default_agent].get("mode") != "primary":
             problems.append(f"default_agent '{default_agent}' must reference a primary-mode agent")
-    agents = config.get("agent")
+    agents = config.get("agents", config.get("agent"))
     if agents is not None:
         if not isinstance(agents, dict):
-            problems.append("agent must be an object")
+            problems.append("agents must be an object")
         else:
             for name, agent in agents.items():
                 if not isinstance(agent, dict):
@@ -548,7 +573,7 @@ def warn_unknown_models(config, models):
     refs = []
     if isinstance(config.get("small_model"), str):
         refs.append(("small_model", config["small_model"]))
-    for name, agent in (config.get("agent") or {}).items():
+    for name, agent in agent_block(config).items():
         if isinstance(agent, dict) and isinstance(agent.get("model"), str):
             refs.append((f"agent '{name}'", agent["model"]))
     for label, model in refs:
@@ -688,7 +713,7 @@ def main():
     else:
         print("  (no models discovered)")
 
-    defaults = json.loads((Path(__file__).parent / "default-agents.json").read_text(encoding="utf-8"))
+    defaults = json.loads(SEED_PATH.read_text(encoding="utf-8"))
     existing = {}
     if target.exists():
         try:
@@ -696,9 +721,10 @@ def main():
             if not isinstance(parsed, dict):
                 print("warning: existing config is not a JSON object; starting from defaults")
             else:
-                if not isinstance(parsed.get("agent"), dict) and "agent" in parsed:
-                    print("warning: existing 'agent' is not an object; using default agents")
-                    del parsed["agent"]
+                for key in ("agents", "agent"):
+                    if key in parsed and not isinstance(parsed.get(key), dict):
+                        print(f"warning: existing '{key}' is not an object; using seed agents")
+                        del parsed[key]
                 existing = parsed
         except (json.JSONDecodeError, ValueError, OSError) as exc:
             print(f"warning: could not parse existing config ({exc}); starting from defaults")
@@ -725,7 +751,7 @@ def main():
     print("\n-- default_agent --")
     primary_agents = [
         name
-        for name, agent in config.get("agent", {}).items()
+        for name, agent in agent_block(config).items()
         if agent.get("mode") == "primary"
     ]
     current_default = config.get("default_agent")

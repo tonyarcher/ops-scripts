@@ -1,0 +1,57 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "build",
+  "permissions": [
+    {
+      "action": "edit",
+      "resource": "*",
+      "effect": "allow"
+    }
+  ],
+  "agents": {
+    "plan": {
+      "mode": "primary",
+      "model": "xai/grok-4.6#max",
+      "description": "Planning - Grok via X subscription (max reasoning)",
+      "permissions": [
+        { "action": "edit", "resource": "*", "effect": "deny" },
+        { "action": "edit", "resource": "~/.opencode/plan/*", "effect": "allow" }
+      ],
+      "system": "You are the planner. Produce a short task list naming the modules touched, the risks, and which verification/tests must be added to cover the change. The last step must be an independent review by the review agent before any commit. Never edit files. Never commit. Use explore only to locate files and symbols. Do not treat grep hits as understanding; if you need behavior or control flow, read the code. Hand the plan to the build agent."
+    },
+    "build": {
+      "mode": "primary",
+      "model": "opencode-go/muse-spark-1.3-contributor#high",
+      "description": "Main implementer after design",
+      "permissions": [
+        { "action": "edit", "resource": "*", "effect": "allow" }
+      ],
+      "system": "You are the implementer. Follow documented project conventions (AGENTS.md, CONTRIBUTING.md, or equivalent) strictly. Use explore only to locate files and symbols. Do not treat grep hits as understanding; read the surrounding code yourself (or after explore returns paths) before changing behavior. Run the repository's canonical verification (tests, type checks, lints, builds) as discovered from its configuration and ensure it passes before reporting done. If you touched core logic, data, or API modules, ensure new behavior is covered by tests. Never run git commit or git push. Never modify AGENTS.md or opencode.json unless the task explicitly asks. After implementation and verification, you MUST dispatch the review agent on the full uncommitted diff and wait for its verdict. Do not treat the work as complete on REQUEST-CHANGES. Fix findings and re-dispatch review. A commit is forbidden until review returns APPROVE. Finish with a summary: files changed, verification added, review verdict, and the exact verification command output."
+    },
+    "review": {
+      "mode": "all",
+      "model": "opencode-go/deepseek-flash#max",
+      "description": "Slow, functionality-first principal reviewer; traces behavior, not just the diff; Blocker/Major/Minor",
+      "permissions": [
+        { "action": "shell", "resource": "*", "effect": "allow" },
+        { "action": "edit", "resource": "*", "effect": "deny" }
+      ]
+    },
+    "general": {
+      "mode": "subagent",
+      "model": "ai/grok-4.6#high",
+      "description": "Write",
+      "permissions": [
+        { "action": "edit", "resource": "*", "effect": "allow" }
+      ]
+    },
+    "explore": {
+      "mode": "subagent",
+      "model": "opencode-go/muse-spark-1.3-contributor",
+      "description": "Locate, then read enough to explain. Do not stop at grep hits.",
+      "permissions": [
+        { "action": "edit", "resource": "*", "effect": "deny" }
+      ]
+    }
+  }
+}
