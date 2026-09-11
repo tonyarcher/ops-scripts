@@ -38,7 +38,7 @@ source ~/.bashrc         # or just open a new terminal
 Optionally install the recommended tools the config knows how to use:
 
 ```bash
-bash setup.sh --install-tools   # ripgrep, eza, fzf, zoxide, htop, jq, tree, bat, fd-find, bun, go, jdk, uv, rustup...
+bash setup.sh --install-tools   # ripgrep, eza, fzf, zoxide, htop, jq, tree, bat, fd-find, bun, go, jdk, uv, rustup, gitleaks, osv-scanner, git-delta, ast-grep...
 ```
 
 Your previous `~/.bashrc`, `~/.bash_env`, etc. are never lost: they land in

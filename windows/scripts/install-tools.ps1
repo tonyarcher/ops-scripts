@@ -1,7 +1,10 @@
 # Windows dev-tool installer. Mirrors `dotfiles/setup.sh --install-tools`
 # (ripgrep, eza, fzf, zoxide, jq, bat, fd, 7zip) plus vim and the AI/power-user
 # extras proven on this box: gh, pwsh 7, lazygit, uv, opencode, ffmpeg, Go,
-# JDK 21, rustup. Also installs the user-wide AGENTS.md pointer (symlink or copy).
+# JDK 21, rustup, git-delta, gitleaks, osv-scanner, ast-grep. uv puts ruff/mypy
+# in ~/.local/bin; this script persists that
+# directory on the user PATH so OpenCode and new shells can find ruff.
+# Also installs the user-wide AGENTS.md pointer (symlink or copy).
 #
 # Idempotent: installed tools are skipped (winget also no-ops on them).
 # Needs no admin for user-scope installs; winget self-elevates per package
@@ -49,6 +52,8 @@ $Tools = @(
     @{ Id = 'GoLang.Go'; Cmd = 'go' }
     @{ Id = 'Microsoft.OpenJDK.21'; Cmd = 'java' }
     @{ Id = 'Rustlang.Rustup'; Cmd = 'rustup' }
+    @{ Id = 'dandavison.delta'; Cmd = 'delta' }
+    @{ Id = 'Gitleaks.Gitleaks'; Cmd = 'gitleaks' }
 )
 
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
@@ -129,6 +134,41 @@ function Install-Fzf {
     }
 }
 
+function Get-UvToolBin {
+    $out = & uv tool dir --bin 2>$null
+    if ($LASTEXITCODE -eq 0 -and $out) {
+        return ([string]$out).Trim()
+    }
+    return (Join-Path $env:USERPROFILE '.local\bin')
+}
+
+function Add-UserPath([string]$Dir) {
+    if (-not $Dir) { return }
+    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+    if ($null -eq $userPath) { $userPath = '' }
+    $needle = $Dir.TrimEnd('\')
+    foreach ($part in ($userPath -split ';')) {
+        if ($part.TrimEnd('\') -eq $needle) { return }
+    }
+    $newPath = if ($userPath) { "$Dir;$userPath" } else { $Dir }
+    [Environment]::SetEnvironmentVariable('Path', $newPath, 'User')
+}
+
+function Ensure-UvToolPath {
+    $uvBin = Get-UvToolBin
+    if ($DryRun) {
+        Write-Host "    would add $uvBin to user PATH"
+        return
+    }
+    Add-UserPath $uvBin
+    Update-SessionPath
+    if (Test-ToolUsable 'ruff') {
+        Write-Host '    ruff on PATH'
+        return
+    }
+    Write-Host "    FAIL ruff: not on PATH after adding $uvBin (restart the shell)"
+}
+
 function Install-UvTools {
     if (-not (Test-ToolUsable 'uv')) {
         Write-Host '    skip: uv not on PATH'
@@ -150,6 +190,7 @@ function Install-UvTools {
             Write-Host "    installed $pkg (uv tool)"
         }
     }
+    Ensure-UvToolPath
 }
 
 function Install-AgentsMd {
@@ -174,6 +215,99 @@ function Install-AgentsMd {
     Write-Host '    FAIL: python not on PATH (install Python first)'
 }
 
+
+function Install-GoPkg([string]$Pkg, [string]$Cmd) {
+    if ((-not $Force) -and (Test-ToolUsable $Cmd)) {
+        Write-Host "    already have $Cmd -- skip"
+        return
+    }
+    if ($DryRun) {
+        Write-Host "    would go install $Pkg"
+        return
+    }
+    if (-not (Test-ToolUsable 'go')) {
+        Write-Host "    FAIL $Cmd : no Go toolchain"
+        return
+    }
+    go install $Pkg
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "    FAIL go install $Pkg : exit $LASTEXITCODE"
+        return
+    }
+    Update-SessionPath
+    Add-UserPath (Join-Path $env:USERPROFILE 'go\bin')
+    Update-SessionPath
+    if (Test-ToolUsable $Cmd) {
+        Write-Host "    installed $Cmd (go)"
+    } else {
+        Write-Host "    FAIL $Cmd : go install ok but not on PATH"
+    }
+}
+
+function Install-CargoPkg([string]$Pkg, [string]$Cmd) {
+    if ((-not $Force) -and (Test-ToolUsable $Cmd)) {
+        Write-Host "    already have $Cmd -- skip"
+        return
+    }
+    if ($DryRun) {
+        Write-Host "    would cargo install $Pkg"
+        return
+    }
+    if (-not (Test-ToolUsable 'cargo')) {
+        Write-Host "    FAIL $Cmd : no cargo (install rustup first)"
+        return
+    }
+    cargo install $Pkg --locked
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "    FAIL cargo install $Pkg : exit $LASTEXITCODE"
+        return
+    }
+    Update-SessionPath
+    Add-UserPath (Join-Path $env:USERPROFILE '.cargo\bin')
+    Update-SessionPath
+    if (Test-ToolUsable $Cmd) {
+        Write-Host "    installed $Cmd (cargo)"
+    } else {
+        Write-Host "    FAIL $Cmd : cargo install ok but not on PATH"
+    }
+}
+
+
+function Install-NpmGlobal([string]$Pkg, [string]$Cmd) {
+    if ((-not $Force) -and (Test-ToolUsable $Cmd)) {
+        Write-Host "    already have $Cmd -- skip"
+        return
+    }
+    if ($DryRun) {
+        Write-Host "    would npm install -g $Pkg"
+        return
+    }
+    if (-not (Test-ToolUsable 'npm')) {
+        Write-Host "    FAIL $Cmd : no npm"
+        return
+    }
+    npm install -g $Pkg
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "    FAIL npm install -g $Pkg : exit $LASTEXITCODE"
+        return
+    }
+    Update-SessionPath
+    if (Test-ToolUsable $Cmd) {
+        Write-Host "    installed $Cmd (npm)"
+    } else {
+        Write-Host "    FAIL $Cmd : npm install ok but not on PATH"
+    }
+}
+
+function Install-ReviewTools {
+    Install-GoPkg 'github.com/zricethezav/gitleaks/v8@latest' 'gitleaks'
+    Install-GoPkg 'github.com/google/osv-scanner/v2/cmd/osv-scanner@latest' 'osv-scanner'
+    Install-NpmGlobal '@ast-grep/cli' 'sg'
+    if (-not (Test-ToolUsable 'delta')) {
+        Install-CargoPkg 'git-delta' 'delta'
+    }
+}
+
 if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
     Write-Error 'winget not found -- install App Installer from the Microsoft Store first.'
     exit 1
@@ -189,6 +323,10 @@ Install-Fzf
 
 Write-Host '==> python tools (ruff, mypy) via uv'
 Install-UvTools
+
+Write-Host '==> review tools (gitleaks, osv-scanner, delta, ast-grep)'
+Install-ReviewTools
+
 
 Write-Host '==> user-wide AGENTS.md (OpenCode pointer)'
 Install-AgentsMd

@@ -1,0 +1,14 @@
+# Lint floor from AGENTS.md: ruff check, ruff format, ANN, C901 ≤ 15.
+# OpenCode `formatter: true` discovers this file.
+
+target-version = "py312"
+
+[lint]
+extend-select = ["ANN", "C90"]
+
+[lint.mccabe]
+max-complexity = 15
+
+[format]
+quote-style = "double"
+indent-style = "space"

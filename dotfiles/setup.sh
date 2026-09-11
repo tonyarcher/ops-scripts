@@ -105,6 +105,16 @@ if [ "$INSTALL_TOOLS" = "--install-tools" ]; then
     else
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
     fi
+    export PATH="$HOME/go/bin:$HOME/.cargo/bin:$PATH"
+    echo "Installing review tools (gitleaks, osv-scanner, git-delta, ast-grep)..."
+    if command -v go >/dev/null 2>&1; then
+        command -v gitleaks >/dev/null 2>&1 || go install github.com/zricethezav/gitleaks/v8@latest
+        command -v osv-scanner >/dev/null 2>&1 || go install github.com/google/osv-scanner/v2/cmd/osv-scanner@latest
+    fi
+    if command -v cargo >/dev/null 2>&1; then
+        command -v delta >/dev/null 2>&1 || cargo install git-delta --locked
+        command -v sg >/dev/null 2>&1 || cargo install ast-grep --locked
+    fi
 fi
 
 # --- 3b. User-wide AGENTS.md (always; OpenCode reads ~/.config/opencode/AGENTS.md)

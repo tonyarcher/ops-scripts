@@ -84,6 +84,7 @@ install_uv_tools() {
   fi
   uv tool install ruff
   uv tool install mypy
+  export PATH="$HOME/.local/bin:$PATH"
 }
 
 find_python() {
@@ -116,6 +117,7 @@ install_agents() {
 print_next() {
   echo
   echo "Done. Open a new terminal so PATH picks up brew, uv, and rustup."
+  echo "uv tools (ruff, mypy):  export PATH=\"\$HOME/.local/bin:\$PATH\""
   echo "Java (keg-only):  export PATH=\"\$(brew --prefix openjdk@21)/bin:\$PATH\""
   echo "python alias:     export PATH=\"\$(brew --prefix python)/libexec/bin:\$PATH\""
   echo "WireGuard app:    brew install --cask wireguard   (or the App Store)"

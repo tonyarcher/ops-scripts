@@ -36,6 +36,10 @@ REQUIRED = frozenset(
         "fzf",
         "bun",
         "wireguard-tools",
+        "gitleaks",
+        "git-delta",
+        "ast-grep",
+        "osv-scanner",
     }
 )
 FORBIDDEN = frozenset(
@@ -101,6 +105,10 @@ class InstallScript(unittest.TestCase):
     def test_usage_range_skips_set_e(self) -> None:
         script = (ROOT / "install-tools.sh").read_text(encoding="utf-8")
         self.assertIn("sed -n '2,10p'", script)
+
+    def test_puts_uv_tools_on_path(self) -> None:
+        script = (ROOT / "install-tools.sh").read_text(encoding="utf-8")
+        self.assertIn('export PATH="$HOME/.local/bin:$PATH"', script)
 
 
 if __name__ == "__main__":

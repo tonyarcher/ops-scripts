@@ -75,7 +75,11 @@ if (Test-Path "$HOME\go\bin") { Add-PathPrefix "$HOME\go\bin" }
 # Rust (cargo)
 if (Test-Path "$HOME\.cargo\bin") { Add-PathPrefix "$HOME\.cargo\bin" }
 
-# Python -- pip --user and uv put binaries here
+# uv tool binaries (ruff, mypy). OpenCode formatter needs this on PATH too;
+# install-tools.ps1 also persists it on the user PATH.
+if (Test-Path "$HOME\.local\bin") { Add-PathPrefix "$HOME\.local\bin" }
+
+# Python -- pip --user
 if (Test-Path "$HOME\AppData\Roaming\Python\Python312\Scripts") {
     Add-PathPrefix "$HOME\AppData\Roaming\Python\Python312\Scripts"
 }

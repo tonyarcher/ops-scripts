@@ -31,6 +31,8 @@ Rules:
 - Shell is for wrappers, cron entries, and `ssh` one-liners — not for parsing HTML or calling JSON APIs.
 - Windows-only work lives in `windows/`. Do not put `.ps1` files in `cron/`, `importers/`, `data/`, `sites/`, or `dotfiles/`. Those trees are Linux/WSL or OS-agnostic.
 
+`windows/scripts/install-tools.ps1` (and `dotfiles/setup.sh --install-tools`, `macos/Brewfile`) also install review CLIs: gitleaks, osv-scanner, ast-grep, git-delta.
+
 ### Bun / TypeScript
 
 - One `.ts` file is enough for most jobs. Use a directory when there is sample input, a local `package.json`, or notes.

@@ -82,7 +82,7 @@ fi
 # ---------------------------------------------------------------------------
 #  Python / Ruby / other languages
 #  --------------------------------------------------------------------------
-# pip --user and pipx put binaries here
+# pip --user, pipx, and uv tool (ruff, mypy) put binaries here
 export PATH="$HOME/.local/bin:$PATH"
 
 # Ruby (if installed with rbenv)

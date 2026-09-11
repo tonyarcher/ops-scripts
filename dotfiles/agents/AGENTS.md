@@ -95,6 +95,20 @@ has no `global` keyword. Closures over an app-wide store are the same bug.
 - After every `await`, recheck that the owner is still the same session
   (`isConnected`, mode, generation).
 
+## Review tools
+
+Installed by `windows/scripts/install-tools.ps1` and
+`dotfiles/setup.sh --install-tools` (Mac: Brewfile). Use them when they are
+on PATH. Do not add a scanning SaaS.
+
+| Tool | Job |
+| --- | --- |
+| `ast-grep` (`sg`) | Structural search (XSS, SQL concat, `innerHTML`). Prefer this over inventing a regex. |
+| `gitleaks detect` | Secrets in git history and the working tree. |
+| `osv-scanner -r .` | Dependency CVEs. Pair with `npm audit` in Node repos. |
+| `delta` | Readable git diffs when present. |
+| `ttsc-graph` MCP | TypeScript callers/callees when the project configures it in `opencode.json`. |
+
 ## Python
 
 - Type hints on every public function and method. `from __future__ import annotations`.

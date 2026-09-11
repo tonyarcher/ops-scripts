@@ -21,7 +21,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File windows/scripts/connect-ops-
 ```
 
 `install-tools.ps1` takes `-DryRun` (list only) and `-Force` (reinstall all).
-It also installs Go, JDK 21, rustup, ruff/mypy (via uv), and the user-wide
+It also installs Go, JDK 21, rustup, ruff/mypy (via uv, `~\.local\bin` on the
+user PATH), git-delta, gitleaks, osv-scanner, ast-grep, and the user-wide
 AGENTS.md (`%APPDATA%\agents\AGENTS.md`, OpenCode pointer at
 `~\.config\opencode\AGENTS.md` — symlink, or a copy if Windows lacks symlink
 privilege).
