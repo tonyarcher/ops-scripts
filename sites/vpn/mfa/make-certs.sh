@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time private CA + host cert for MFA HTTPS (security keys).
+# One-time private CA + host cert for MFA HTTPS (passkeys).
 # No public CA, no Google. Writes /config/mfa/tls/.
 set -euo pipefail
 DIR="${MFA_TLS_DIR:-/config/mfa/tls}"

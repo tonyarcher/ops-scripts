@@ -17,7 +17,7 @@ sites/vpn/
   gateway/             # nginx image (stream + http)
   clients/connect.sh   # Linux/macOS wg-quick
   clients/show-qr.py   # QR for iPad/Android WireGuard import
-  mfa/                 # optional TOTP + security-key portal (WG_MFA=true)
+  mfa/                 # optional TOTP + passkey portal (WG_MFA=true)
 windows/scripts/deploy-ops-vpn.ps1
 windows/scripts/connect-ops-vpn.ps1
 ```
@@ -123,7 +123,7 @@ To put a compose stack that already listens on loopback onto the tunnel, copy
 `gateway/http.d/webapps.example.conf` to a `*.conf`, set `proxy_pass`, rebuild
 the gateway. Always `listen 10.13.13.1:…`, never `0.0.0.0`.
 
-## Optional MFA (TOTP + security key)
+## Optional MFA (TOTP + passkey)
 
 WireGuard itself has no 2FA in the handshake. This toggle gates **HTTP on the
 tunnel** (web apps) after the phone or laptop is connected. SSH stays
@@ -145,12 +145,14 @@ python sites/vpn/deploy.py mfa-enroll ipad
 Then on the device: tunnel on → `http://10.13.13.1:8080/mfa/` → TOTP.
 That unlocks the client IP for `WG_MFA_TTL_HOURS` (default 12).
 
-Security keys (YubiKey and similar, not a Google passkey):
+Passkeys (iCloud/Face ID, Windows Hello, or a hardware key). No Google
+account required; Android may offer Google Password Manager — decline it
+and use TOTP or a key if you want.
 
 1. After TOTP, open `https://vpn.ops:8443/mfa/` (DNS for `vpn.ops` is served
    on the tunnel).
 2. Install `http://10.13.13.1:8080/mfa/ca.crt` as a profile/CA on the device.
-3. **Register security key**, then later **Unlock with security key**.
+3. **Register passkey**, then later **Unlock with passkey**.
 
 Extra nginx `location /` blocks should `include /etc/nginx/mfa-protect.inc;`
 (see `webapps.example.conf`). `/healthz` stays open.

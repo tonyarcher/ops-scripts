@@ -14,7 +14,7 @@
 </head>
 <body>
   <h1>ops-vpn</h1>
-  <p>Second factor for web apps on this tunnel. No Google or other account.</p>
+  <p>Second factor for web apps on this tunnel. No Google or other IdP required.</p>
   <p>Peer: <code id="peer">…</code></p>
   <p class="err" id="err"></p>
   <p class="ok" id="ok"></p>
@@ -25,13 +25,15 @@
     <button type="submit">Unlock with TOTP</button>
   </form>
   <p>
-    <button type="button" id="key-login">Unlock with security key</button>
-    <button type="button" id="key-reg">Register security key</button>
+    <button type="button" id="key-login">Unlock with passkey</button>
+    <button type="button" id="key-reg">Register passkey</button>
   </p>
   <p>TOTP: any local app (Aegis, 2FAS, Ente Auth). Enroll:
     <code>python sites/vpn/deploy.py mfa-enroll PEER</code></p>
-  <p>Security keys need HTTPS at <code id="https-hint">https://vpn.ops:8443/mfa/</code>
-    after installing <a href="ca.crt">ca.crt</a> on the device.</p>
+  <p>Passkeys (iCloud, Windows Hello, or a hardware key) need HTTPS at
+    <code id="https-hint">https://vpn.ops:8443/mfa/</code>
+    after installing <a href="ca.crt">ca.crt</a> on the device.
+    Android may offer Google Password Manager; you can decline and use TOTP or a key.</p>
   <script>
     function b64urlToBuf(s) {
       const pad = "=".repeat((4 - s.length % 4) % 4);
@@ -114,7 +116,7 @@
             transports: resp.getTransports ? resp.getTransports() : [],
           },
         });
-        show("ok", "security key registered");
+        show("ok", "passkey registered");
       } catch (e) { show("err", e.message); }
     });
   </script>

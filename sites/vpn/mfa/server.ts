@@ -1,6 +1,6 @@
 /**
  * Optional MFA portal for ops-vpn HTTP on the tunnel.
- * TOTP + FIDO2 security keys. No Google/IdP.
+ * TOTP + passkeys (platform or hardware). No IdP.
  *
  * Run: node --experimental-strip-types server.ts
  */
@@ -130,10 +130,8 @@ async function handleRegOptions(res: ServerResponse, ip: string): Promise<void> 
     excludeCredentials: existing.map((k) => ({ id: k.id })),
     authenticatorSelection: {
       residentKey: "preferred",
-      userVerification: "discouraged",
-      authenticatorAttachment: "cross-platform",
+      userVerification: "preferred",
     },
-    preferredAuthenticatorType: "securityKey",
   });
   challenges.set(ip, { kind: "reg", challenge: options.challenge, exp: Date.now() + 120_000 });
   json(res, 200, options);
@@ -179,13 +177,13 @@ async function handleLoginOptions(res: ServerResponse, ip: string): Promise<void
   }
   const keys = loadPasskeys(keysDir, peer);
   if (keys.length === 0) {
-    json(res, 400, { error: "no security key registered" });
+    json(res, 400, { error: "no passkey registered" });
     return;
   }
   const options = await generateAuthenticationOptions({
     rpID,
     allowCredentials: keys.map((k) => ({ id: k.id })),
-    userVerification: "discouraged",
+    userVerification: "preferred",
   });
   challenges.set(ip, { kind: "login", challenge: options.challenge, exp: Date.now() + 120_000 });
   json(res, 200, options);
