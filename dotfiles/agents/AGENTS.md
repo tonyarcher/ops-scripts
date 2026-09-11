@@ -209,6 +209,11 @@ Correlation is **request/session/trace ids**, not OS thread ids (Node/Go don’t
 Postgres or SQLite, parameterized queries only. Migrations are versioned files,
 not ad-hoc `ALTER` in a shell. Do not concatenate user input into SQL.
 
+**Who talks to Postgres:** Kotlin (JVM) or Python only. Do not add new Node/`pg`
+access. Existing TypeScript APIs that use Postgres are legacy — migrate them to
+Kotlin (or Python) instead of extending them. Browser IndexedDB/localStorage is
+not this rule.
+
 ## Docker / Compose
 
 Runtime by machine:
