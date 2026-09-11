@@ -30,7 +30,7 @@
     },
     "review": {
       "mode": "all",
-      "model": "opencode-go/deepseek-flash#max",
+      "model": "opencode-go/deepseek-v4-flash#max",
       "description": "Slow, functionality-first principal reviewer; traces behavior, not just the diff; Blocker/Major/Minor",
       "permissions": [
         { "action": "shell", "resource": "*", "effect": "allow" },
