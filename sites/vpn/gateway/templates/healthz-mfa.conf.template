@@ -1,0 +1,34 @@
+server {
+    listen ${LISTEN_ADDR}:${WG_HTTP_PORT} default_server;
+    server_name _;
+    server_tokens off;
+
+    location /healthz {
+        add_header Content-Type text/plain;
+        return 200 "ok\n";
+    }
+
+    location = /mfa/auth {
+        internal;
+        proxy_pass http://127.0.0.1:9090/auth;
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        proxy_set_header X-Forwarded-For $remote_addr;
+    }
+
+    location /mfa/ {
+        proxy_pass http://127.0.0.1:9090/;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header Host $host;
+    }
+
+    location @mfa_login {
+        return 302 /mfa/;
+    }
+
+    location / {
+        auth_request /mfa/auth;
+        error_page 401 = @mfa_login;
+        return 404;
+    }
+}

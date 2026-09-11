@@ -6,6 +6,7 @@ lock-ssh is dry-run unless --yes.
 
 Run:  python sites/vpn/deploy.py --remote up
       python sites/vpn/deploy.py peer laptop
+      python sites/vpn/deploy.py mfa-enroll --name ipad
       python sites/vpn/deploy.py lock-ssh
       python sites/vpn/deploy.py lock-ssh --yes
 
@@ -52,13 +53,22 @@ def ensure_env() -> None:
     if not ENV_EXAMPLE.is_file():
         raise SystemExit(f"error: no {ENV_FILE} and no .env.example")
     shutil.copy(ENV_EXAMPLE, ENV_FILE)
-    print(f"Created {ENV_FILE} from .env.example — edit VPN_HOST before up.", file=sys.stderr)
+    print(
+        f"Created {ENV_FILE} from .env.example — edit VPN_HOST before up.",
+        file=sys.stderr,
+    )
+
+
+def mfa_on(env: dict[str, str]) -> bool:
+    return env.get("WG_MFA", "").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def compose_argv(env_file: Path, extra: list[str]) -> list[str]:
     cmd = ["docker", "compose", "-f", str(COMPOSE_FILE)]
     if env_file.is_file():
         cmd.extend(["--env-file", str(env_file)])
+    if mfa_on(load_dotenv(env_file)):
+        cmd.extend(["--profile", "mfa"])
     cmd.extend(extra)
     return cmd
 
@@ -116,7 +126,10 @@ def start_tunnel(env: dict[str, str]) -> None:
     ]
     if key:
         cmd[1:1] = ["-i", key]
-    print(f"==> SSH tunnel {user}@{host} docker.sock -> 127.0.0.1:{tunnel_port}", file=sys.stderr)
+    print(
+        f"==> SSH tunnel {user}@{host} docker.sock -> 127.0.0.1:{tunnel_port}",
+        file=sys.stderr,
+    )
     _tunnel = subprocess.Popen(cmd)
     wait_tcp("127.0.0.1", int(tunnel_port))
     os.environ["DOCKER_HOST"] = f"tcp://127.0.0.1:{tunnel_port}"
@@ -124,7 +137,7 @@ def start_tunnel(env: dict[str, str]) -> None:
 
 def select_engine(args: argparse.Namespace, env: dict[str, str]) -> None:
     host = os.environ.get("DOCKER_HOST", "")
-    local_tunnel = host.startswith("tcp://127.0.0.1:") or host.startswith("tcp://localhost:")
+    local_tunnel = host.startswith(("tcp://127.0.0.1:", "tcp://localhost:"))
     if args.remote and local_tunnel:
         print("==> --remote: using existing localhost Docker tunnel", file=sys.stderr)
         return
@@ -141,7 +154,14 @@ def select_engine(args: argparse.Namespace, env: dict[str, str]) -> None:
 def need_docker() -> None:
     if shutil.which("docker") is None:
         raise SystemExit("error: docker not found")
-    if subprocess.call(["docker", "compose", "version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) != 0:
+    if (
+        subprocess.call(
+            ["docker", "compose", "version"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        != 0
+    ):
         raise SystemExit("error: docker compose v2 not found")
 
 
@@ -152,23 +172,47 @@ def cmd_up(extra: list[str]) -> int:
         return code
     run_compose(["ps"])
     print(f"==> fetch a client profile: {sys.argv[0]} peer laptop", file=sys.stderr)
-    print(f"==> lock public SSH only after VPN login works: {sys.argv[0]} lock-ssh", file=sys.stderr)
+    print(
+        f"==> lock public SSH only after VPN login works: {sys.argv[0]} lock-ssh",
+        file=sys.stderr,
+    )
     return 0
 
 
 def cmd_peer(name: str) -> int:
-    return run_compose(["exec", "-T", "wireguard", "python3", "/opt/vpn/vpnconfig.py", "print-client", "--name", name])
+    return run_compose(
+        [
+            "exec",
+            "-T",
+            "wireguard",
+            "python3",
+            "/opt/vpn/vpnconfig.py",
+            "print-client",
+            "--name",
+            name,
+        ]
+    )
 
 
 def cmd_lock(yes: bool) -> int:
     inner = ["lock-ssh", "--yes"] if yes else ["lock-ssh"]
-    return run_compose(["exec", "-T", "wireguard", "python3", "/opt/vpn/vpnconfig.py", *inner])
+    return run_compose(
+        ["exec", "-T", "wireguard", "python3", "/opt/vpn/vpnconfig.py", *inner]
+    )
 
 
 def cmd_check() -> int:
     env = load_dotenv(ENV_FILE)
     os.environ.update({k: v for k, v in env.items() if k not in os.environ})
-    check = subprocess.call([sys.executable, str(HERE / "vpnconfig.py"), "check", "--config-dir", str(HERE / "var")])
+    check = subprocess.call(
+        [
+            sys.executable,
+            str(HERE / "vpnconfig.py"),
+            "check",
+            "--config-dir",
+            str(HERE / "var"),
+        ]
+    )
     if check != 0:
         return check
     code = run_compose(["config"])
@@ -186,7 +230,21 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "command",
         nargs="?",
         default="up",
-        choices=["build", "up", "down", "restart", "logs", "ps", "config", "clean", "check", "peer", "lock-ssh", "shell"],
+        choices=[
+            "build",
+            "up",
+            "down",
+            "restart",
+            "logs",
+            "ps",
+            "config",
+            "clean",
+            "check",
+            "peer",
+            "lock-ssh",
+            "mfa-enroll",
+            "shell",
+        ],
     )
     parser.add_argument("rest", nargs="*")
     return parser.parse_args(argv)
@@ -209,17 +267,37 @@ def dispatch(args: argparse.Namespace) -> int:
     if args.command == "config":
         return run_compose(["config", *extra])
     if args.command == "clean":
-        print("==> removing containers, local images, and ops-vpn-config (all keys)", file=sys.stderr)
+        print(
+            "==> removing containers, local images, and ops-vpn-config (all keys)",
+            file=sys.stderr,
+        )
         return run_compose(["down", "-v", "--rmi", "local", *extra])
     if args.command == "check":
         return cmd_check()
+    return dispatch_exec(args, extra)
+
+
+def dispatch_exec(args: argparse.Namespace, extra: list[str]) -> int:
     if args.command == "peer":
         if not extra:
             raise SystemExit("usage: deploy.py peer <name>")
         return cmd_peer(extra[0])
     if args.command == "lock-ssh":
         return cmd_lock(args.yes)
+    if args.command == "mfa-enroll":
+        return cmd_mfa_enroll(extra, yes=args.yes)
     return run_compose(["exec", "wireguard", "bash", *extra])
+
+
+def cmd_mfa_enroll(extra: list[str], *, yes: bool) -> int:
+    if not extra:
+        raise SystemExit("usage: deploy.py mfa-enroll <peer> [--force]")
+    inner = ["mfa-enroll", "--name", extra[0]]
+    if "--force" in extra[1:] or yes:
+        inner.append("--force")
+    return run_compose(
+        ["exec", "-T", "wireguard", "python3", "/opt/vpn/vpnconfig.py", *inner]
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

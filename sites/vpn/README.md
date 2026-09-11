@@ -3,7 +3,9 @@
 WireGuard on a provider-agnostic Linux instance (Docker Compose), plus an
 nginx gateway for HTTP reverse-proxy and TCP port-forwards on the tunnel IP.
 SSH to the box over `10.13.13.1` after the client is up. Not OpenVPN — one
-`.conf` imports on Windows, Linux, and macOS with the official WireGuard app.
+`.conf` imports on Windows, Linux, macOS, iPad, and Android with the official
+WireGuard app. iPad and Android are first-class: they exist to open the web
+apps on the tunnel, not to SSH.
 
 ```
 sites/vpn/
@@ -14,6 +16,8 @@ sites/vpn/
   wireguard/           # server image
   gateway/             # nginx image (stream + http)
   clients/connect.sh   # Linux/macOS wg-quick
+  clients/show-qr.py   # QR for iPad/Android WireGuard import
+  mfa/                 # optional TOTP + security-key portal (WG_MFA=true)
 windows/scripts/deploy-ops-vpn.ps1
 windows/scripts/connect-ops-vpn.ps1
 ```
@@ -83,10 +87,73 @@ python sites/vpn/deploy.py peer laptop > laptop.conf
 | Windows | [WireGuard for Windows](https://www.wireguard.com/install/) | Import tunnel from file, or `windows/scripts/connect-ops-vpn.ps1 -Config laptop.conf` |
 | Linux | `wireguard-tools` | `bash sites/vpn/clients/connect.sh laptop.conf` |
 | macOS | WireGuard app or `brew install wireguard-tools` | Import in the app, or `connect.sh` if `wg-quick` is on PATH |
+| iPad | [WireGuard for iOS](https://apps.apple.com/app/wireguard/id1441195209) | QR (`show-qr.py`) or Create from file |
+| Android | [WireGuard for Android](https://play.google.com/store/apps/details?id=com.wireguard.android) | QR (`show-qr.py`) or Create from file |
 
-Split tunnel is the default (`AllowedIPs = 10.13.13.0/24`): SSH and nginx
-only. To send all IPv4 (HTTP/HTTPS) out the instance, set `WG_FULL_TUNNEL=true`
-and rebuild/up. That uses NAT/MASQUERADE on the WAN NIC.
+Append peer names; do not reorder. Order assigns `10.13.13.2`, `.3`, …:
+
+```bash
+# sites/vpn/.env  — example: WG_PEERS=laptop,ipad,android
+python sites/vpn/deploy.py --remote up
+python sites/vpn/deploy.py peer ipad > ipad.conf
+python sites/vpn/clients/show-qr.py ipad.conf
+```
+
+`show-qr.py` needs `qrencode` on PATH. Without it, AirDrop/email `ipad.conf`
+into the Files app and use **Create from file**. The conf contains a private
+key; do not commit it or paste it into chat.
+
+Split tunnel is the default (`AllowedIPs = 10.13.13.0/24`): SSH, nginx, and
+other hosts on that subnet. That is enough for web apps on a VPN IP. Do not
+turn on `WG_FULL_TUNNEL` just to browse them. Keepalive is already 25s (phones
+behind carrier NAT).
+
+## iPad / Android web apps
+
+Safari and Chrome must use **IPv4 URLs** on `10.13.13.0/24`. There is no DNS
+in the split-tunnel conf.
+
+1. Install WireGuard, import the peer, toggle the tunnel on.
+2. Prove it: `http://10.13.13.1:8080/healthz` must return `ok`.
+3. Open the app on its tunnel address, for example `http://10.13.13.1/` if
+   nginx on this box proxies it, or `http://10.13.13.4/…` if the app host is
+   another WireGuard peer (`sites/hosts`).
+
+To put a compose stack that already listens on loopback onto the tunnel, copy
+`gateway/http.d/webapps.example.conf` to a `*.conf`, set `proxy_pass`, rebuild
+the gateway. Always `listen 10.13.13.1:…`, never `0.0.0.0`.
+
+## Optional MFA (TOTP + security key)
+
+WireGuard itself has no 2FA in the handshake. This toggle gates **HTTP on the
+tunnel** (web apps) after the phone or laptop is connected. SSH stays
+key-only. No Google account, no IdP.
+
+Set in `sites/vpn/.env` and redeploy:
+
+```
+WG_MFA=true
+WG_MFA_HOST=vpn.ops
+```
+
+```bash
+python sites/vpn/deploy.py --remote up
+python sites/vpn/deploy.py mfa-enroll ipad
+# scan the otpauth:// URI with Aegis, 2FAS, or Ente Auth (any TOTP app)
+```
+
+Then on the device: tunnel on → `http://10.13.13.1:8080/mfa/` → TOTP.
+That unlocks the client IP for `WG_MFA_TTL_HOURS` (default 12).
+
+Security keys (YubiKey and similar, not a Google passkey):
+
+1. After TOTP, open `https://vpn.ops:8443/mfa/` (DNS for `vpn.ops` is served
+   on the tunnel).
+2. Install `http://10.13.13.1:8080/mfa/ca.crt` as a profile/CA on the device.
+3. **Register security key**, then later **Unlock with security key**.
+
+Extra nginx `location /` blocks should `include /etc/nginx/mfa-protect.inc;`
+(see `webapps.example.conf`). `/healthz` stays open.
 
 ## HTTP / port-forwards
 
@@ -108,9 +175,11 @@ Does not `docker context` shuffle or publish dockerd on the LAN.
 ```bash
 python sites/vpn/tests/test_vpnconfig.py
 python sites/vpn/tests/test_deploy.py
+python sites/vpn/tests/test_show_qr.py
+node --test sites/vpn/mfa/totp.test.ts
 python sites/vpn/vpnconfig.py check
 docker compose -f sites/vpn/docker-compose.yml config
-ruff check sites/vpn/vpnconfig.py sites/vpn/tests
-ruff format --check sites/vpn/vpnconfig.py sites/vpn/tests
-mypy --strict sites/vpn/vpnconfig.py
+ruff check sites/vpn/vpnconfig.py sites/vpn/clients/show-qr.py sites/vpn/tests
+ruff format --check sites/vpn/vpnconfig.py sites/vpn/clients/show-qr.py sites/vpn/tests
+mypy --strict sites/vpn/vpnconfig.py sites/vpn/clients/show-qr.py
 ```

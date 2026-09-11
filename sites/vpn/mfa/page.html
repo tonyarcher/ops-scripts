@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ops-vpn sign-in</title>
+  <style>
+    body { font-family: sans-serif; max-width: 28rem; margin: 2rem auto; padding: 0 1rem; }
+    input, button { font: inherit; padding: 0.4rem 0.6rem; margin: 0.25rem 0; }
+    .err { color: #a40000; }
+    .ok { color: #0b6; }
+    code { font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <h1>ops-vpn</h1>
+  <p>Second factor for web apps on this tunnel. No Google or other account.</p>
+  <p>Peer: <code id="peer">…</code></p>
+  <p class="err" id="err"></p>
+  <p class="ok" id="ok"></p>
+  <form id="totp">
+    <label>Authenticator code
+      <input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required>
+    </label>
+    <button type="submit">Unlock with TOTP</button>
+  </form>
+  <p>
+    <button type="button" id="key-login">Unlock with security key</button>
+    <button type="button" id="key-reg">Register security key</button>
+  </p>
+  <p>TOTP: any local app (Aegis, 2FAS, Ente Auth). Enroll:
+    <code>python sites/vpn/deploy.py mfa-enroll PEER</code></p>
+  <p>Security keys need HTTPS at <code id="https-hint">https://vpn.ops:8443/mfa/</code>
+    after installing <a href="ca.crt">ca.crt</a> on the device.</p>
+  <script>
+    function b64urlToBuf(s) {
+      const pad = "=".repeat((4 - s.length % 4) % 4);
+      const b64 = (s + pad).replace(/-/g, "+").replace(/_/g, "/");
+      const raw = atob(b64);
+      const out = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+      return out.buffer;
+    }
+    function bufToB64url(buf) {
+      const bytes = new Uint8Array(buf);
+      let s = "";
+      for (const b of bytes) s += String.fromCharCode(b);
+      return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+    }
+    function show(kind, msg) {
+      document.getElementById("err").textContent = kind === "err" ? msg : "";
+      document.getElementById("ok").textContent = kind === "ok" ? msg : "";
+    }
+    async function json(url, body) {
+      const res = await fetch(url, {
+        method: body ? "POST" : "GET",
+        headers: body ? { "content-type": "application/json" } : {},
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || res.statusText);
+      return data;
+    }
+    fetch("whoami").then((r) => r.json()).then((d) => {
+      document.getElementById("peer").textContent = d.peer || "(unknown IP)";
+    });
+    document.getElementById("totp").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      show("err", "");
+      const code = new FormData(ev.target).get("code");
+      try {
+        await json("totp", { code });
+        show("ok", "unlocked");
+      } catch (e) { show("err", e.message); }
+    });
+    document.getElementById("key-login").addEventListener("click", async () => {
+      show("err", "");
+      try {
+        const opt = await json("webauthn/login/options");
+        opt.challenge = b64urlToBuf(opt.challenge);
+        (opt.allowCredentials || []).forEach((c) => { c.id = b64urlToBuf(c.id); });
+        const cred = await navigator.credentials.get({ publicKey: opt });
+        const resp = cred.response;
+        await json("webauthn/login", {
+          id: cred.id,
+          rawId: bufToB64url(cred.rawId),
+          type: cred.type,
+          response: {
+            clientDataJSON: bufToB64url(resp.clientDataJSON),
+            authenticatorData: bufToB64url(resp.authenticatorData),
+            signature: bufToB64url(resp.signature),
+            userHandle: resp.userHandle ? bufToB64url(resp.userHandle) : undefined,
+          },
+        });
+        show("ok", "unlocked");
+      } catch (e) { show("err", e.message); }
+    });
+    document.getElementById("key-reg").addEventListener("click", async () => {
+      show("err", "");
+      try {
+        const opt = await json("webauthn/register/options");
+        opt.challenge = b64urlToBuf(opt.challenge);
+        opt.user.id = b64urlToBuf(opt.user.id);
+        (opt.excludeCredentials || []).forEach((c) => { c.id = b64urlToBuf(c.id); });
+        const cred = await navigator.credentials.create({ publicKey: opt });
+        const resp = cred.response;
+        await json("webauthn/register", {
+          id: cred.id,
+          rawId: bufToB64url(cred.rawId),
+          type: cred.type,
+          response: {
+            clientDataJSON: bufToB64url(resp.clientDataJSON),
+            attestationObject: bufToB64url(resp.attestationObject),
+            transports: resp.getTransports ? resp.getTransports() : [],
+          },
+        });
+        show("ok", "security key registered");
+      } catch (e) { show("err", e.message); }
+    });
+  </script>
+</body>
+</html>

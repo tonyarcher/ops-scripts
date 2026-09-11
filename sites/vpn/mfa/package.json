@@ -1,0 +1,16 @@
+{
+  "name": "ops-vpn-mfa",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=23.6"
+  },
+  "scripts": {
+    "start": "node server.ts",
+    "test": "node --test totp.test.ts"
+  },
+  "dependencies": {
+    "@simplewebauthn/server": "14.0.1"
+  }
+}

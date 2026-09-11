@@ -45,6 +45,8 @@ services:
       WG_CONFIG_DIR: /config
       HOST_SSH_PORT: ${HOST_SSH_PORT:-22}
       WG_HTTP_PORT: ${WG_HTTP_PORT:-8080}
+      WG_MFA: ${WG_MFA:-false}
+      WG_MFA_HOST: ${WG_MFA_HOST:-vpn.ops}
     restart: unless-stopped
     init: true
     stop_grace_period: 15s
@@ -62,15 +64,22 @@ services:
     image: ops-vpn-gateway:local
     container_name: ops-vpn-gateway
     network_mode: host
-    depends_on:
-      wireguard:
-        condition: service_healthy
+    volumes:
+      - ops-vpn-config:/config:ro
     environment:
       WG_SERVER_ADDRESS: ${WG_SERVER_ADDRESS:-10.13.13.1/24}
       WG_LISTEN_ADDR: ${WG_LISTEN_ADDR:-10.13.13.1}
       WG_HTTP_PORT: ${WG_HTTP_PORT:-8080}
+      WG_MFA: ${WG_MFA:-false}
+      WG_MFA_HOST: ${WG_MFA_HOST:-vpn.ops}
     restart: unless-stopped
     init: true
+    depends_on:
+      wireguard:
+        condition: service_healthy
+      mfa:
+        condition: service_healthy
+        required: false
     healthcheck:
       test:
         [
@@ -81,6 +90,25 @@ services:
       timeout: 5s
       retries: 3
       start_period: 25s
+
+  mfa:
+    profiles: ["mfa"]
+    build:
+      context: .
+      dockerfile: mfa/Dockerfile
+    image: ops-vpn-mfa:local
+    container_name: ops-vpn-mfa
+    network_mode: host
+    volumes:
+      - ops-vpn-config:/config
+    environment:
+      WG_CONFIG_DIR: /config
+      WG_MFA_HOST: ${WG_MFA_HOST:-vpn.ops}
+      WG_MFA_TTL_HOURS: ${WG_MFA_TTL_HOURS:-12}
+      MFA_BIND: 127.0.0.1
+      MFA_PORT: "9090"
+    restart: unless-stopped
+    init: true
 
 volumes:
   ops-vpn-config:

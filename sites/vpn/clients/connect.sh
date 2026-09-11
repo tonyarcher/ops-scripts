@@ -7,6 +7,7 @@
 #
 # Get the profile (contains a private key):
 #   ./deploy.sh peer laptop > laptop.conf
+# iPad/Android: python sites/vpn/clients/show-qr.py laptop.conf
 # Windows: powershell -File windows/scripts/connect-ops-vpn.ps1 -Config laptop.conf
 set -euo pipefail
 

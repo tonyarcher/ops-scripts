@@ -39,6 +39,9 @@ def settings(**overrides: object) -> vpnconfig.Settings:
         "client_dns": None,
         "tun_if": "wg0",
         "http_port": 8080,
+        "mfa": False,
+        "mfa_host": "vpn.ops",
+        "mfa_ttl_hours": 12,
     }
     base.update(overrides)
     return vpnconfig.Settings(**base)  # type: ignore[arg-type]
@@ -114,7 +117,8 @@ class Endpoint(unittest.TestCase):
 
     def test_host_plus_port(self) -> None:
         self.assertEqual(
-            vpnconfig.endpoint_from({"VPN_HOST": "203.0.113.10"}, 51820), "203.0.113.10:51820"
+            vpnconfig.endpoint_from({"VPN_HOST": "203.0.113.10"}, 51820),
+            "203.0.113.10:51820",
         )
 
     def test_placeholder(self) -> None:
@@ -177,6 +181,34 @@ class Render(unittest.TestCase):
         )
         self.assertIn("AllowedIPs = 0.0.0.0/0", body)
         self.assertIn("DNS = 1.1.1.1", body)
+
+    def test_client_mfa_sets_tunnel_dns(self) -> None:
+        body = vpnconfig.client_conf(
+            private=FAKE_PRIV,
+            address="10.13.13.2/32",
+            server_public=FAKE_PUB,
+            psk=FAKE_PSK,
+            settings=settings(mfa=True),
+        )
+        self.assertIn("DNS = 10.13.13.1", body)
+
+
+class MfaEnroll(unittest.TestCase):
+    def test_writes_secret_once(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            cfg = settings(config_dir=Path(raw))
+            buf = StringIO()
+            with redirect_stdout(buf):
+                vpnconfig.cmd_mfa_enroll(cfg, "ipad", force=False)
+            path = vpnconfig.totp_secret_path(cfg, "ipad")
+            self.assertTrue(path.is_file())
+            self.assertIn("otpauth://totp/", buf.getvalue())
+            first = path.read_text(encoding="utf-8")
+            with self.assertRaises(SystemExit):
+                vpnconfig.cmd_mfa_enroll(cfg, "ipad", force=False)
+            with redirect_stdout(StringIO()):
+                vpnconfig.cmd_mfa_enroll(cfg, "ipad", force=True)
+            self.assertNotEqual(first, path.read_text(encoding="utf-8"))
 
 
 class Iptables(unittest.TestCase):

@@ -21,7 +21,10 @@ class LoadDotenv(unittest.TestCase):
     def test_skips_comments_and_blanks(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             path = Path(raw) / ".env"
-            path.write_text("# hi\n\nVPN_HOST=203.0.113.10\nVPN_DEPLOY_USER=deploy\n", encoding="utf-8")
+            path.write_text(
+                "# hi\n\nVPN_HOST=203.0.113.10\nVPN_DEPLOY_USER=deploy\n",
+                encoding="utf-8",
+            )
             got = deploy.load_dotenv(path)
         self.assertEqual(got["VPN_HOST"], "203.0.113.10")
         self.assertEqual(got["VPN_DEPLOY_USER"], "deploy")
@@ -40,6 +43,18 @@ class ParseArgs(unittest.TestCase):
         args = deploy.parse_args(["peer", "laptop"])
         self.assertEqual(args.command, "peer")
         self.assertEqual(args.rest, ["laptop"])
+
+    def test_mfa_enroll_args(self) -> None:
+        args = deploy.parse_args(["mfa-enroll", "ipad"])
+        self.assertEqual(args.command, "mfa-enroll")
+        self.assertEqual(args.rest, ["ipad"])
+
+
+class MfaToggle(unittest.TestCase):
+    def test_profile_off_by_default(self) -> None:
+        self.assertFalse(deploy.mfa_on({}))
+        self.assertFalse(deploy.mfa_on({"WG_MFA": "false"}))
+        self.assertTrue(deploy.mfa_on({"WG_MFA": "true"}))
 
 
 class PlaceholderHost(unittest.TestCase):

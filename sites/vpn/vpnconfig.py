@@ -8,20 +8,23 @@ public SSH; keep a console session).
 Run:  python sites/vpn/vpnconfig.py check
       python sites/vpn/vpnconfig.py render --config-dir /config
       python sites/vpn/vpnconfig.py print-client --name laptop
+      python sites/vpn/vpnconfig.py mfa-enroll --name ipad
       python sites/vpn/vpnconfig.py lock-ssh
       python sites/vpn/vpnconfig.py lock-ssh --yes  # also drops IPv6 SSH
 
 Env: VPN_HOST, WG_SERVER_ADDRESS, WG_LISTEN_PORT, WG_PEERS, WG_FULL_TUNNEL,
      WG_ENDPOINT, WG_WAN_INTERFACE, WG_CLIENT_ALLOWED_IPS, WG_CLIENT_DNS,
-     HOST_SSH_PORT. See .env.example.
+     HOST_SSH_PORT, WG_MFA, WG_MFA_HOST. See .env.example.
 """
 
 from __future__ import annotations
 
 import argparse
+import base64
 import ipaddress
 import os
 import re
+import secrets
 import shutil
 import subprocess
 import sys
@@ -52,6 +55,9 @@ class Settings:
     client_dns: str | None
     tun_if: str
     http_port: int
+    mfa: bool
+    mfa_host: str
+    mfa_ttl_hours: int
 
 
 def env_bool(raw: str | None, default: bool = False) -> bool:
@@ -156,6 +162,9 @@ def load_settings(env: Mapping[str, str], config_dir: Path) -> Settings:
         client_dns=dns,
         tun_if=env.get("WG_TUN_IF", "").strip() or DEFAULT_TUN,
         http_port=http_port,
+        mfa=env_bool(env.get("WG_MFA"), False),
+        mfa_host=env.get("WG_MFA_HOST", "").strip() or "vpn.ops",
+        mfa_ttl_hours=max(1, env_int(env.get("WG_MFA_TTL_HOURS"), 12)),
     )
 
 
@@ -271,6 +280,8 @@ def peer_stanza(public: str, psk: str, allowed: str) -> str:
 def client_dns_line(settings: Settings) -> str | None:
     if settings.client_dns:
         return f"DNS = {settings.client_dns}"
+    if settings.mfa:
+        return f"DNS = {listen_addr(settings.server_cidr)}"
     if settings.full_tunnel:
         return "DNS = 1.1.1.1"
     return None
@@ -319,6 +330,9 @@ def summary_lines(settings: Settings) -> list[str]:
         f"http: {listen_addr(settings.server_cidr)}:{settings.http_port}",
         f"ssh_port: {settings.ssh_port}",
         f"wan: {settings.wan_interface or '(detect at start)'}",
+        f"mfa: {'on' if settings.mfa else 'off'}",
+        f"mfa_host: {settings.mfa_host}",
+        f"mfa_ttl_hours: {settings.mfa_ttl_hours}",
     ]
 
 
@@ -529,6 +543,35 @@ def cmd_peers(settings: Settings) -> None:
         print(f"{name} {peer_tunnel_address(settings.server_cidr, index)}")
 
 
+def totp_secret_path(settings: Settings, name: str) -> Path:
+    return settings.config_dir / "mfa" / "totp" / name
+
+
+def new_totp_secret() -> str:
+    return base64.b32encode(secrets.token_bytes(20)).decode("ascii").rstrip("=")
+
+
+def otpauth_uri(name: str, secret: str) -> str:
+    return (
+        f"otpauth://totp/ops-vpn:{name}?secret={secret}"
+        "&issuer=ops-vpn&algorithm=SHA1&digits=6&period=30"
+    )
+
+
+def cmd_mfa_enroll(settings: Settings, name: str, force: bool) -> None:
+    if not PEER_NAME_RE.match(name):
+        raise SystemExit(f"invalid peer name {name!r}")
+    path = totp_secret_path(settings, name)
+    if path.is_file() and not force:
+        raise SystemExit(f"already enrolled {name} (pass --force to rotate)")
+    secret = new_totp_secret()
+    write_secret(path, secret)
+    print(
+        "warning: this URI is a second factor secret; do not commit it", file=sys.stderr
+    )
+    print(otpauth_uri(name, secret))
+
+
 def cmd_print_client(settings: Settings, name: str) -> None:
     if not PEER_NAME_RE.match(name):
         raise SystemExit(f"invalid peer name {name!r}")
@@ -582,6 +625,10 @@ def build_parser() -> argparse.ArgumentParser:
     nat_up.add_argument("--config-dir", type=Path, default=None)
     nat_down = sub.add_parser("nat-down", help="remove MASQUERADE/FORWARD rules")
     nat_down.add_argument("--config-dir", type=Path, default=None)
+    enroll = sub.add_parser("mfa-enroll", help="create a TOTP secret for one peer")
+    enroll.add_argument("--name", required=True)
+    enroll.add_argument("--force", action="store_true")
+    enroll.add_argument("--config-dir", type=Path, default=None)
     return parser
 
 
@@ -606,6 +653,9 @@ def dispatch(args: argparse.Namespace, settings: Settings) -> None:
         return
     if args.cmd == "nat-down":
         cmd_nat(settings, up=False)
+        return
+    if args.cmd == "mfa-enroll":
+        cmd_mfa_enroll(settings, args.name, force=args.force)
         return
     raise SystemExit(f"unknown command {args.cmd}")
 
