@@ -125,6 +125,9 @@ on PATH. Do not add a scanning SaaS.
 From the baseball Detekt floor — do not suppress; break the function up.
 
 - Kotlin 2.2+, JVM 21. New code is Kotlin; Java is interop and existing files.
+- Compile on the **host JDK**. JVM bytecode is portable. Docker images are **JRE
+  only** — copy jars (`installDist` / `lib/`). Do not run Gradle or `javac`
+  inside the image. Do not ship a JDK in the runtime container.
 - Domain is pure Kotlin: no Spring/`@Entity`/`jakarta.validation` in shared domain.
 - Immutable `val` data classes. No `java.util.Optional`.
 - Detekt: LongMethod **30**, TooManyFunctions **10** per file/class, cyclomatic
@@ -245,6 +248,8 @@ podman. If a remote deploy fails, check the tunnel first, not the Dockerfiles.
 - Windows-generated lockfiles may omit Linux optional deps — Linux image builds
   must install Linux natives in the image (`npm ci` in the Dockerfile), not copy
   them from the host.
+- **JVM apps are the opposite:** compile on the host JDK, copy jars into a
+  **JRE** image. Do not download Gradle or a JDK in Docker for those services.
 - **Never push images to a registry** (Docker Hub, GHCR, ECR, or otherwise).
   We do not like registries. Build from the git tree on the engine that will
   run the containers (local Rancher or the remote daemon via the tunnel) and
