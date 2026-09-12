@@ -37,7 +37,10 @@ Keep STE habits: short sentences, one idea, same word, imperative procedures, no
 
 - Prefer a known algorithm or an existing tool over a custom one.
 - Search for the usual approach first (stdlib, the workspace, the project’s stack).
-- Do not invent a parser, retry/backoff, rate limiter, or protocol.
+- Do not invent a parser, retry/backoff, rate limiter, protocol, ORM, or HTTP
+  framework. Use the library.
+- Do not hand-roll JDBC mappers, EntityManager CRUD, or a persistence layer
+  when JPA / Spring Data already does it.
 - Do not add a dependency when stdlib or the stack already does the job.
 
 ## Language pick
@@ -67,6 +70,25 @@ Prefer the stdlib. Do not add Python as an app runtime in a TypeScript repo.
   extending an existing installer or deploy script.
 - Scratch scripts stay out of git unless the user wants them kept. Kept helpers
   go in that repo’s `tools/*.py` or in ops-scripts under the right job folder.
+
+## Services
+
+Follow usual microservice boundaries so a service can move to its own git
+repo later.
+
+- **Identity is an IdP**, not a product backend. Other apps are OAuth/OIDC
+  clients. They authenticate against it. They do not store fitness, RSS, or
+  radio data in the identity database. Do not add product tables to `user-api`.
+- **Client ACL** (OAuth `client_id`, redirect URIs, scopes) lives in
+  configuration or database tables, not hardcoded product lists in Kotlin/TS.
+  Seed data for local deploy is fine; production adds rows, not code.
+- **Database per service.** Each API owns its schema. No shared tables across
+  APIs. Clients call HTTP (JWT/JWKS), not another service’s Postgres.
+- **One API per webapp** that has server data. That API is its own codebase
+  (own process, own image). The Lit UI may live next to it in a monorepo
+  today; do not couple them so they cannot split.
+- Postgres/SQL from Kotlin or Python only. Do not add new Node `pg` access.
+  Browser IndexedDB is not this rule.
 
 ## Shared package vs app module
 
@@ -125,11 +147,15 @@ on PATH. Do not add a scanning SaaS.
 From the baseball Detekt floor — do not suppress; break the function up.
 
 - Kotlin 2.2+, JVM 21. New code is Kotlin; Java is interop and existing files.
+- Install Gradle on PATH (`gradle --version`) via install-tools. Do not commit
+  `gradle-wrapper.jar`. `gradle` reads the project `*.kts` files.
 - Compile on the **host JDK**. JVM bytecode is portable. Docker images are **JRE
   only** — copy jars (`installDist` / `lib/`). Do not run Gradle or `javac`
   inside the image. Do not ship a JDK in the runtime container.
-- Domain is pure Kotlin: no Spring/`@Entity`/`jakarta.validation` in shared domain.
-- Immutable `val` data classes. No `java.util.Optional`.
+- New Postgres HTTP APIs: Spring Data JPA (`JpaRepository`) + Flyway.
+  `@Entity` is a row. Do not write SQL mappers or JDBC DAOs.
+- Ranking, parsers, and other non-table code stay ordinary Kotlin.
+- Immutable `val` where it is not an entity. No `java.util.Optional`.
 - Detekt: LongMethod **30**, TooManyFunctions **10** per file/class, cyclomatic
   **15**, nested depth **4**, line length **120**.
 - Slice tests for HTTP and persistence; high coverage on domain logic.
@@ -210,9 +236,8 @@ Postgres or SQLite, parameterized queries only. Migrations are versioned files,
 not ad-hoc `ALTER` in a shell. Do not concatenate user input into SQL.
 
 **Who talks to Postgres:** Kotlin (JVM) or Python only. Do not add new Node/`pg`
-access. Existing TypeScript APIs that use Postgres are legacy — migrate them to
-Kotlin (or Python) instead of extending them. Browser IndexedDB/localStorage is
-not this rule.
+access. Each API owns its database. Do not put product data in the identity
+service. Browser IndexedDB/localStorage is not this rule.
 
 ## Docker / Compose
 

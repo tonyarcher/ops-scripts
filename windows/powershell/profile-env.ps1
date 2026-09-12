@@ -60,8 +60,19 @@ if (($env:JAVA_HOME) -and (Test-Path (Join-Path $env:JAVA_HOME 'bin\java.exe')))
 if (-not $env:MAVEN_HOME) { $env:MAVEN_HOME = "$HOME\tools\apache-maven-3.9.9" }
 if (Test-Path $env:MAVEN_HOME) { Add-PathPrefix (Join-Path $env:MAVEN_HOME 'bin') }
 
-# $env:GRADLE_HOME = "$HOME\tools\gradle-8.10.2"
-# if (Test-Path $env:GRADLE_HOME) { Add-PathPrefix (Join-Path $env:GRADLE_HOME 'bin') }
+# winget Gradle.Gradle puts gradle on PATH. Unpacked zip (Linux-style) is optional.
+if (-not $env:GRADLE_HOME) {
+    $opt = Join-Path $HOME '.local\opt'
+    if (Test-Path $opt) {
+        $localGradle = @(Get-ChildItem $opt -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -like 'gradle-*' -and (Test-Path (Join-Path $_.FullName 'bin\gradle.bat')) } |
+            Sort-Object Name -Descending | Select-Object -First 1)
+        if ($localGradle) { $env:GRADLE_HOME = $localGradle.FullName }
+    }
+}
+if (($env:GRADLE_HOME) -and (Test-Path (Join-Path $env:GRADLE_HOME 'bin\gradle.bat'))) {
+    Add-PathPrefix (Join-Path $env:GRADLE_HOME 'bin')
+}
 
 # $env:ANDROID_HOME = "$HOME\AppData\Local\Android\Sdk"
 # if (Test-Path $env:ANDROID_HOME) { Add-PathPrefix (Join-Path $env:ANDROID_HOME 'platform-tools') }

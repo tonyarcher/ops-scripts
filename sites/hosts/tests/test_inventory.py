@@ -78,6 +78,17 @@ class ParseHost(unittest.TestCase):
         with self.assertRaises(SystemExit):
             inv.parse_host(sample(role="client"))
 
+    def test_accepts_lan_role(self) -> None:
+        host = inv.parse_host(sample(name="thinkpad", role="lan", ssh_user="tony"))
+        self.assertEqual(host.role, "lan")
+        self.assertEqual(host.ssh_user, "tony")
+
+    def test_accepts_lan_hostname(self) -> None:
+        host = inv.parse_host(
+            sample(name="thinkpad", role="lan", ssh_host="thinkpad.lan")
+        )
+        self.assertEqual(host.ssh_host, "thinkpad.lan")
+
     def test_rejects_unknown_key(self) -> None:
         with self.assertRaises(SystemExit):
             inv.parse_host(sample(token="secret"))

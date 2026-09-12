@@ -14,7 +14,7 @@
 #       symlink, or a copy if the OS refuses the link).
 #    4. With --install-tools: apt-installs optional tools (ripgrep, eza, fzf,
 #       zoxide, htop, jq, tree, unzip, 7zip, bat, fd-find, curl, golang-go,
-#       openjdk-21) plus bun, uv, rustup, ruff, mypy.
+#       openjdk-21) plus bun, uv, rustup, ruff, mypy, Gradle 9.4.
 #  Idempotent: safe to run again after edits.
 # =============================================================================
 set -euo pipefail
@@ -99,6 +99,25 @@ if [ "$INSTALL_TOOLS" = "--install-tools" ]; then
     fi
 
     echo
+    echo
+    echo "Installing Gradle..."
+    if command -v gradle >/dev/null 2>&1; then
+        echo "gradle already on PATH: $(command -v gradle)"
+    else
+        gradle_ver="9.4.0"
+        gradle_dest="$HOME/.local/opt/gradle-${gradle_ver}"
+        if [ -x "$gradle_dest/bin/gradle" ]; then
+            echo "gradle already at $gradle_dest"
+        else
+            gradle_zip="/tmp/gradle-${gradle_ver}-bin.zip"
+            mkdir -p "$HOME/.local/opt"
+            curl -fsSL "https://services.gradle.org/distributions/gradle-${gradle_ver}-bin.zip" -o "$gradle_zip"
+            unzip -q -o "$gradle_zip" -d "$HOME/.local/opt"
+            rm -f "$gradle_zip"
+            echo "installed gradle ${gradle_ver} at $gradle_dest"
+        fi
+    fi
+
     echo "Installing rustup..."
     if command -v rustup >/dev/null 2>&1 || [ -x "$HOME/.cargo/bin/rustup" ]; then
         echo "rustup already installed"

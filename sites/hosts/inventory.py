@@ -2,8 +2,9 @@
 """Named SSH/Docker hosts for this ops toolbox.
 
 VPN and Compose stay the runtimes. This list is the missing layer (vpn-gw,
-gpu-1, cad-ws). Copy hosts.example.json to hosts.json and edit. Never commit
-hosts.json. Documentation IPs only in the example (203.0.113.0/24).
+gpu-1, cad-ws, thinkpad). Copy hosts.example.json to hosts.json and edit.
+Never commit hosts.json. Documentation IPs only in the example
+(203.0.113.0/24).
 
 Run:  python sites/hosts/inventory.py list
       python sites/hosts/inventory.py show gpu-1
@@ -29,7 +30,7 @@ HERE = Path(__file__).resolve().parent
 EXAMPLE_FILE = HERE / "hosts.example.json"
 LIVE_FILE = HERE / "hosts.json"
 NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$")
-ROLES = frozenset({"vpn", "gpu", "llm", "cad"})
+ROLES = frozenset({"vpn", "gpu", "llm", "cad", "lan"})
 KNOWN_KEYS = frozenset(
     {
         "name",

@@ -57,8 +57,13 @@ fi
 export MAVEN_HOME="${MAVEN_HOME:-$HOME/tools/apache-maven-3.9.9}"
 [ -d "$MAVEN_HOME" ] && export PATH="$MAVEN_HOME/bin:$PATH"
 
-# export GRADLE_HOME="$HOME/tools/gradle-8.10.2"
-# [ -d "$GRADLE_HOME" ] && export PATH="$GRADLE_HOME/bin:$PATH"
+if [ -z "${GRADLE_HOME:-}" ]; then
+    GRADLE_HOME="$(ls -d "$HOME/.local/opt/gradle-"* 2>/dev/null | sort -V | tail -n 1 || true)"
+fi
+if [ -n "${GRADLE_HOME:-}" ] && [ -x "$GRADLE_HOME/bin/gradle" ]; then
+    export GRADLE_HOME
+    export PATH="$GRADLE_HOME/bin:$PATH"
+fi
 
 # export ANDROID_HOME="$HOME/Android/Sdk"
 # [ -d "$ANDROID_HOME" ] && export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/tools/bin:$PATH"

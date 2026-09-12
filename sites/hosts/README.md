@@ -1,7 +1,8 @@
 # hosts
 
 Named machines you SSH to or run Compose on. VPN (`sites/vpn`) and Docker stay
-the runtimes. This list is the inventory layer: `vpn-gw`, `gpu-1`, `cad-ws`.
+the runtimes. This list is the inventory layer: `vpn-gw`, `gpu-1`, `cad-ws`,
+`thinkpad`.
 
 Copy the example and edit. Never commit `hosts.json`.
 
@@ -26,6 +27,7 @@ example (stderr notes that).
 | `gpu` | NVIDIA Linux, Docker Engine, CUDA (CAD batch / LLM) |
 | `llm` | Long-running inference host (often the same box as `gpu`) |
 | `cad` | Interactive CAD workstation. Host GPU. Not a container. |
+| `lan` | Generic LAN workstation (e.g. ThinkPad over `thinkpad.lan`). SSH target, not a VPN gateway. |
 
 A Mac laptop is a **client** (`macos/`). It has no NVIDIA CUDA. Do not put one
 here as a GPU worker.

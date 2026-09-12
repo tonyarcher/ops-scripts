@@ -32,6 +32,7 @@ REQUIRED = frozenset(
         "vim",
         "go",
         "openjdk@21",
+        "gradle",
         "rustup",
         "fzf",
         "bun",

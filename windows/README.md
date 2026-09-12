@@ -18,10 +18,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File windows/scripts/set-powershe
 powershell -NoProfile -ExecutionPolicy Bypass -File windows/scripts/restart-audio.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File windows/scripts/deploy-ops-vpn.ps1 --remote up
 powershell -NoProfile -ExecutionPolicy Bypass -File windows/scripts/connect-ops-vpn.ps1 -Config .\laptop.conf
+powershell -NoProfile -ExecutionPolicy Bypass -File windows/scripts/add-lan-host.ps1
 ```
 
 `install-tools.ps1` takes `-DryRun` (list only) and `-Force` (reinstall all).
-It also installs Go, JDK 21, rustup, ruff/mypy (via uv, `~\.local\bin` on the
+It also installs Go, JDK 21, Gradle, rustup, ruff/mypy (via uv, `~\.local\bin` on the
 user PATH), git-delta, gitleaks, osv-scanner, ast-grep, and the user-wide
 AGENTS.md (`%APPDATA%\agents\AGENTS.md`, OpenCode pointer at
 `~\.config\opencode\AGENTS.md` — symlink, or a copy if Windows lacks symlink
@@ -31,4 +32,7 @@ privilege).
 `set-powershell-start-home.ps1` sets Start Menu / Desktop PowerShell shortcuts
 and Windows Terminal PowerShell profiles to open in `%USERPROFILE%`. Supports
 `-WhatIf`. Explorer "Open here" and IDE terminals are left alone.
+`add-lan-host.ps1` maps `thinkpad.lan` to `10.0.0.63` in the Windows hosts file
+(idempotent, backs up hosts, self-elevates). Supports `-WhatIf`. Restart Chrome
+afterward (it caches DNS), then open `https://thinkpad.lan/`.
 

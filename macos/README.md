@@ -24,7 +24,7 @@ formulae and does not run `brew bundle install` or write AGENTS.md. Does not
 edit `~/.zshrc`.
 
 `openjdk@21` is keg-only. After install, put this in `~/.zprofile` if you want
-`java` / unversioned `python` on PATH:
+`java` / unversioned `python` on PATH. `gradle` is a normal formula.
 
 ```bash
 eval "$(/opt/homebrew/bin/brew shellenv)"   # Apple Silicon; Intel: /usr/local

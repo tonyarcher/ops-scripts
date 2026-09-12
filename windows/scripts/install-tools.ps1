@@ -1,7 +1,7 @@
 # Windows dev-tool installer. Mirrors `dotfiles/setup.sh --install-tools`
 # (ripgrep, eza, fzf, zoxide, jq, bat, fd, 7zip) plus vim and the AI/power-user
 # extras proven on this box: gh, pwsh 7, lazygit, uv, opencode, ffmpeg, Go,
-# JDK 21, rustup, git-delta, gitleaks, osv-scanner, ast-grep. uv puts ruff/mypy
+# JDK 21, Gradle 9.4 (official zip), rustup, git-delta, gitleaks, osv-scanner, ast-grep. uv puts ruff/mypy
 # in ~/.local/bin; this script persists that
 # directory on the user PATH so OpenCode and new shells can find ruff.
 # Also installs the user-wide AGENTS.md pointer (symlink or copy).
@@ -299,6 +299,35 @@ function Install-NpmGlobal([string]$Pkg, [string]$Cmd) {
     }
 }
 
+function Install-Gradle {
+    $ver = '9.4.0'
+    $dest = Join-Path $env:USERPROFILE ".local\opt\gradle-$ver"
+    $bin = Join-Path $dest 'bin'
+    $exe = Join-Path $bin 'gradle.bat'
+    if ((-not $Force) -and ((Test-ToolUsable 'gradle') -or (Test-Path $exe))) {
+        Write-Host '    already have gradle -- skip'
+        if (Test-Path $exe) { Add-UserPath $bin }
+        return
+    }
+    if ($DryRun) {
+        Write-Host "    would install Gradle $ver"
+        return
+    }
+    $opt = Join-Path $env:USERPROFILE '.local\opt'
+    New-Item -ItemType Directory -Force -Path $opt | Out-Null
+    $zip = Join-Path $env:TEMP "gradle-$ver-bin.zip"
+    Invoke-WebRequest -Uri "https://services.gradle.org/distributions/gradle-$ver-bin.zip" -OutFile $zip
+    tar -xf $zip -C $opt
+    Remove-Item $zip -ErrorAction SilentlyContinue
+    Add-UserPath $bin
+    Update-SessionPath
+    if (Test-ToolUsable 'gradle') {
+        Write-Host "    installed Gradle $ver"
+    } else {
+        Write-Host "    FAIL gradle: unpacked but not on PATH (restart the shell)"
+    }
+}
+
 function Install-ReviewTools {
     Install-GoPkg 'github.com/zricethezav/gitleaks/v8@latest' 'gitleaks'
     Install-GoPkg 'github.com/google/osv-scanner/v2/cmd/osv-scanner@latest' 'osv-scanner'
@@ -320,6 +349,9 @@ foreach ($t in $Tools) {
 
 Write-Host '==> fzf (winget, go-build fallback)'
 Install-Fzf
+
+Write-Host '==> Gradle (official zip)'
+Install-Gradle
 
 Write-Host '==> python tools (ruff, mypy) via uv'
 Install-UvTools
