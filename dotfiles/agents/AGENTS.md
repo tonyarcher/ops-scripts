@@ -30,6 +30,10 @@ Keep STE habits: short sentences, one idea, same word, imperative procedures, no
 - Do not commit or push unless the user asks. Conventional commits when they do.
 - Do not edit `AGENTS.md` or `opencode.json` unless the task asks.
 - Verify with that repo’s own tests/lint/build. Core/data/API changes need tests.
+- Run those entry points as written. Do not re-invoke their tools through bare
+  `npx` — it adds resolution overhead and stalls.
+- Treat fast builds as a high priority. Run independent builds, tests, and
+  checks concurrently instead of serially.
 - Dispatch `review` on the full uncommitted diff (including untracked) before
   calling the work done.
 
