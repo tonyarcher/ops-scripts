@@ -24,9 +24,9 @@ These are meant to scale to ~100 scripts:
 
 - Group by job type first (`cron` / `importers` / `data` / `sites`), then by product (`mastodon`, …), then by script name.
 - One directory per script when it has extras (sample input, notes). A lone file is fine for a true one-liner.
-- kebab-case names.
+- kebab-case names for directories; Python modules use `snake_case` so they import.
 - Each script should be runnable on its own; put shared code in `lib/`.
-- Website / API work: TypeScript on Bun (`bun run path/to/script.ts`) or Node ≥23.6 native TS (`node path/to/script.ts`).
+- Website / API / importer / server work: Python 3 (`python path/to/script.py`, stdlib `urllib` / `http.server` / `sqlite3`).
 - Local files, reports, SSH, and shell glue: Python 3 (`python path/to/script.py`).
 - Windows services / PnP / audio: PowerShell under `windows/` (`powershell -File windows/scripts/…`).
 - macOS client tools: Homebrew under `macos/` (`bash macos/install-tools.sh`).
@@ -45,21 +45,19 @@ These are meant to scale to ~100 scripts:
 ## Running scripts
 
 ```
-node path/to/script.ts
-bun run path/to/script.ts
 python path/to/script.py
 ```
 
-New site work should be TypeScript (Bun or Node native TS).
+New site, API, importer, and server work is Python. TypeScript is only for browser view manipulation.
 
 Agents: see `AGENTS.md`.
 
 ## Contents
 
-- `importers/mastodon/follow-hashtags/` — bulk-follow Mastodon hashtags from a file, another account's followed_tags, and/or trending tags. TypeScript, dry-run by default.
+- `importers/mastodon/follow-hashtags/` — bulk-follow Mastodon hashtags from a file, another account's followed_tags, and/or trending tags. Python, dry-run by default.
 - `sites/opencode/config-generator/` — interactive wizard that generates a project or global opencode.json: model picker fed by `opencode models`, agent editor, validation via `opencode debug config`, backup before replace. Python.
-- `sites/opencode/config-generator/opencode.json.example` — seed for `~/.config/opencode/opencode.json`. The wizard merges this file. Not named `opencode.json`, so OpenCode does not load it as project config.
-- `dotfiles/` — the shell dotfiles and installer (merged from the `dotfiles` repo). See `dotfiles/README.md`; run `bash dotfiles/setup.sh` from the repo to install. Always installs user-wide `AGENTS.md` (`~/.config/agents/AGENTS.md`, OpenCode pointer at `~/.config/opencode/AGENTS.md` — symlink, copy fallback).
+- `sites/opencode/config-generator/opencode.json.example` — seed for `~/.config/opencode/opencode.json`. The wizard merges this file. Not named `opencode.json`, so OpenCode does not load it as project config. Ships disabled `jev-mcp` (TypeSafe Jev judgments); needs `TYPESAFE_API_KEY`, then flip `disabled` to `false`.
+- `dotfiles/` — the shell dotfiles and installer (merged from the `dotfiles` repo). See `dotfiles/README.md`; run `bash dotfiles/setup.sh` from the repo to install. Always installs user-wide `AGENTS.md` (`~/.config/agents/AGENTS.md`, OpenCode pointer at `~/.config/opencode/AGENTS.md` — symlink, copy fallback) and user-wide skills (`dotfiles/agents/skills/` → `~/.config/opencode/skills/`, same way).
 - `windows/` — Windows setup + admin scripts. See `windows/README.md`; run `windows/scripts/install-tools.ps1` then `windows/scripts/install-profile.ps1` from the repo root.
 - `windows/scripts/set-powershell-start-home.ps1` — make PowerShell / pwsh open in the user home directory (shortcuts + Windows Terminal). Profile fallback cds out of System32.
 - `windows/scripts/restart-audio.ps1` — recycle the ROG Cirrus speaker amp, Realtek codec, and Windows Audio when speakers die and a tinny motherboard device takes over. PowerShell, self-elevates.

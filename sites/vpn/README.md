@@ -178,10 +178,12 @@ Does not `docker context` shuffle or publish dockerd on the LAN.
 python sites/vpn/tests/test_vpnconfig.py
 python sites/vpn/tests/test_deploy.py
 python sites/vpn/tests/test_show_qr.py
-node --test sites/vpn/mfa/totp.test.ts
+python sites/vpn/mfa/tests/test_totp.py
+python sites/vpn/mfa/tests/test_store.py
+python sites/vpn/mfa/tests/test_server.py
 python sites/vpn/vpnconfig.py check
 docker compose -f sites/vpn/docker-compose.yml config
-ruff check sites/vpn/vpnconfig.py sites/vpn/clients/show-qr.py sites/vpn/tests
-ruff format --check sites/vpn/vpnconfig.py sites/vpn/clients/show-qr.py sites/vpn/tests
-mypy --strict sites/vpn/vpnconfig.py sites/vpn/clients/show-qr.py
+ruff check sites/vpn/vpnconfig.py sites/vpn/clients/show-qr.py sites/vpn/tests sites/vpn/mfa
+ruff format --check sites/vpn/vpnconfig.py sites/vpn/clients/show-qr.py sites/vpn/tests sites/vpn/mfa
+mypy --strict sites/vpn/vpnconfig.py sites/vpn/clients/show-qr.py sites/vpn/mfa/server.py sites/vpn/mfa/store.py sites/vpn/mfa/totp.py
 ```

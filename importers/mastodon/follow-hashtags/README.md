@@ -36,14 +36,14 @@ Sources are merged and deduped. Progress is stored in a SQLite state file so re-
 ## Examples
 
 ```
-node follow-hashtags.ts --file sample-tags.txt
-node follow-hashtags.ts --instance https://example.social --file sample-tags.txt --apply
-node follow-hashtags.ts --instance https://new.social --source-instance https://old.social --apply
-node follow-hashtags.ts --instance https://example.social --trends 20
-node --test --disable-warning=ExperimentalWarning
+python follow_hashtags.py --file sample-tags.txt
+python follow_hashtags.py --instance https://example.social --file sample-tags.txt --apply
+python follow_hashtags.py --instance https://new.social --source-instance https://old.social --apply
+python follow_hashtags.py --instance https://example.social --trends 20
+python -m unittest discover -s tests -v
 ```
 
-`bun run follow-hashtags.ts` works too (uses `bun:sqlite` when `node:sqlite` is missing).
+Uses stdlib `urllib` and `sqlite3`. No Bun or Node required.
 
 ## Notes
 

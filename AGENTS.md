@@ -15,38 +15,38 @@ Do not turn this repo into a web app, monorepo product, or shared framework. No 
 
 ## Language policy
 
-Pick the language from the job, not from habit.
+Pick Python first. TypeScript is only for browser view manipulation.
 
 | Job | Language | How to run |
 | --- | --- | --- |
-| Loading, scraping, or manipulating a website / HTTP API | TypeScript on Bun or Node ≥23.6 native TS | `bun run path/to/script.ts` or `node path/to/script.ts` |
+| Website / HTTP API, scrapers, importers, servers | Python 3 (stdlib `urllib`, `http.server`, `sqlite3`) | `python path/to/script.py` |
 | Local files, data munging, reports that never leave the box | Python 3 | `python path/to/script.py` |
 | SSH, remote shells, server glue, cron wrappers | Python 3, or a small POSIX `sh`/`bash` script if it is genuinely just glue | `python …` or `./script.sh` |
+| Browser view manipulation only (DOM) | TypeScript | `node path/to/script.ts` |
 | Windows services, PnP, audio, other Win32 admin | PowerShell 5.1+ under `windows/` | `powershell -File windows/scripts/…` |
 
 Rules:
 
-- New website/API work is TypeScript. Prefer Bun; Node native TS is an accepted runner. Do not add ts-node, tsx, Deno, Kotlin, or a second HTTP library for that.
+- New website, API, importer, and server work is Python. Use stdlib `urllib`, `http.server`, and `sqlite3` first. Add a dependency only when stdlib is painful, with a pinned `requirements.txt` next to that script.
+- TypeScript is only for browser view manipulation (DOM). Do not write Node servers, importers, or HTTP clients for new work.
 - New local-only or SSH work is Python. Prefer the stdlib. Add a dependency only when stdlib is painful.
-- Shell is for wrappers, cron entries, and `ssh` one-liners — not for parsing HTML or calling JSON APIs.
+- Shell is for wrappers, cron entries, and `ssh` one-liners — not for parsing HTML or calling JSON APIs (use Python for that).
 - Windows-only work lives in `windows/`. Do not put `.ps1` files in `cron/`, `importers/`, `data/`, `sites/`, or `dotfiles/`. Those trees are Linux/WSL or OS-agnostic.
 
 `windows/scripts/install-tools.ps1` (and `dotfiles/setup.sh --install-tools`, `macos/Brewfile`) also install review CLIs: gitleaks, osv-scanner, ast-grep, git-delta.
 
-### Bun / TypeScript
+### TypeScript (browser views only)
 
-- One `.ts` file is enough for most jobs. Use a directory when there is sample input, a local `package.json`, or notes.
-- Prefer Bun's built-in `fetch`, `Bun.file`, and `bun:sqlite`. Do not add axios, node-fetch, or a bundler. When targeting Node, Node built-ins are fine too (`node:sqlite`, `node:test`, `fetch`).
+- TypeScript exists here only for browser view manipulation (DOM). Do not use it for servers, importers, or HTTP clients.
 - TypeScript, not JavaScript. Keep types local and boring; no `any` to silence real mistakes.
-- Shared TS helpers go in `lib/` (e.g. `lib/http.ts`). Import with a relative path. Do not invent a workspace package until several scripts actually share the code.
-- Shebang optional: `#!/usr/bin/env bun`. Document the `bun run …` command in the header comment either way.
 - Rate-limit remote calls. Sleep between writes. Fail loud on non-2xx unless the script is explicitly probing.
 - Never log access tokens. Read them from the environment.
 
 ### Python
 
 - Target current CPython 3. Type hints on every public function. `from __future__ import annotations`.
-- Target the stdlib first (`pathlib`, `json`, `csv`, `subprocess`, `argparse`, `urllib` only if you must — prefer not using Python for HTTP).
+- Target the stdlib first (`pathlib`, `json`, `csv`, `subprocess`, `argparse`, `urllib`, `http.server`, `sqlite3`).
+- HTTP servers use stdlib `http.server` (or `ThreadingHTTPServer`). HTTP clients use `urllib`. Rate-limit remote calls, retry with backoff, set timeouts. Never log tokens.
 - If the job is SSH or remote shell, use `subprocess` with an explicit argv list, never `shell=True` with interpolated strings.
 - Lint: `ruff check` / `ruff format`. Complexity `C901` ≤ 15; functions ≤ ~30 lines. `mypy --strict` when the script is more than a one-liner.
 - Shared Python helpers go in `lib/` (e.g. `lib/sshutil.py`).
@@ -73,10 +73,10 @@ windows/      Windows-only admin scripts (PowerShell). Do not mix Linux/agnostic
 
 Examples:
 
-- `importers/mastodon/follow-hashtags/follow-hashtags.ts`
+- `importers/mastodon/follow-hashtags/follow_hashtags.py`
 - `cron/mastodon/prune-old-media.py`
 - `data/normalize-export.py`
-- `sites/mastodon/list-filters.ts`
+- `sites/mastodon/list-filters.py`
 
 Conventions:
 
@@ -108,7 +108,8 @@ Conventions:
 
 ## What not to do
 
-- Do not add npm toolchains, ts-node, or tsx. Bun or Node native TS runs the TypeScript.
+- Do not write Node servers, importers, or HTTP clients. TypeScript is only for browser view manipulation.
+- Do not add npm toolchains, ts-node, or tsx for server or importer work.
 - Do not introduce Kotlin, Gradle, or Maven for new work. User-wide JVM rules do not apply here.
 - Do not create empty sample scripts to “fill out” the tree.
 - Do not add CI, Docker, or a monorepo workspace unless asked.
@@ -119,8 +120,9 @@ Conventions:
 
 There is no repo-wide test suite. Before finishing:
 
-- The new or changed script is in the right folder and named in kebab-case.
-- It runs the way the header says (`bun run …` or `python …`).
-- `node --test` passes for scripts that have tests.
+- The new or changed script is in the right folder and named in kebab-case (Python modules use `snake_case` so they import).
+- It runs the way the header says (`python …`).
+- `python -m unittest` (or `python path/to/test_*.py`) passes for scripts that have tests.
+- `ruff check`, `ruff format --check`, and `mypy --strict` pass for changed Python files.
 - No secrets landed in the diff.
 - Existing scripts you did not need were not touched.
