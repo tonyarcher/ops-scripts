@@ -1,0 +1,3 @@
+# Keep Unix line endings everywhere, even on Windows checkouts.
+# core.autocrlf must not reintroduce CRLF here; shell scripts break on it.
+* text=auto eol=lf

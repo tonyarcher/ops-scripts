@@ -36,6 +36,9 @@ Keep STE habits: short sentences, one idea, same word, imperative procedures, no
   checks concurrently instead of serially.
 - Dispatch `review` on the full uncommitted diff (including untracked) before
   calling the work done.
+- Run the `jev-gate` skill (`jev_ask` on the full uncommitted diff) before
+  the work is done. `act` proceeds; `review` means fix and re-ask; `abstain`
+  escalates. Skip only when `jev-mcp` has no key — say so.
 
 ## Reuse
 

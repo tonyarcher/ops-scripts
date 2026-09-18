@@ -1,6 +1,19 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "build",
+  "mcp": {
+    "servers": {
+      "jev-mcp": {
+        "type": "local",
+        "command": [
+          "npx",
+          "-y",
+          "jev-mcp@0.4.0"
+        ],
+        "disabled": true
+      }
+    }
+  },
   "permissions": [
     {
       "action": "edit",
@@ -31,7 +44,8 @@
     "review": {
       "mode": "all",
       "model": "opencode-go/deepseek-v4-flash#max",
-      "description": "Slow, functionality-first principal reviewer; traces behavior, not just the diff; Blocker/Major/Minor",
+      "description": "Functionality-first principal reviewer; traces behavior, not just the diff; Blocker/Major/Minor",
+      "system": "You are the reviewer. Review the code to the best of your ability by reading the diff and the surrounding code. Do not run full unit tests, linters, type checks, or builds; the build agent already verified. Run a targeted command or snippet only to clarify behavior that reading cannot resolve. Use explore only to locate files and symbols. Do not treat grep hits as understanding; read the surrounding code. Never edit files. Never commit. Report Blockers, Majors, and Minors with file and line. Return APPROVE or REQUEST-CHANGES.",
       "permissions": [
         { "action": "shell", "resource": "*", "effect": "allow" },
         { "action": "edit", "resource": "*", "effect": "deny" }

@@ -10,7 +10,9 @@ it does and where to change things.
 dotfiles/
 ├── setup.sh            installer: backs up your current files, installs these
 ├── install-agents.py   user-wide AGENTS.md → ~/.config/agents + OpenCode pointer (symlink, copy fallback)
+│                       + skills → ~/.config/opencode/skills (same way)
 ├── agents/AGENTS.md    canonical user-wide agent instructions
+├── agents/skills/      user-wide OpenCode skills (jev-gate: Jev diff gate)
 ├── bash/
 │   ├── .bashrc         the "hub" -- sources everything below (edit rarely)
 │   ├── .bash_env       ENVIRONMENT VARIABLES & PATH  (JAVA_HOME, ...)   <-- you will edit this

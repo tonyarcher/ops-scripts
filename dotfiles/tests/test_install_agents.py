@@ -9,7 +9,9 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-_spec = importlib.util.spec_from_file_location("install_agents", ROOT / "install-agents.py")
+_spec = importlib.util.spec_from_file_location(
+    "install_agents", ROOT / "install-agents.py"
+)
 assert _spec is not None and _spec.loader is not None
 install_agents = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(install_agents)
@@ -32,7 +34,9 @@ class Paths(unittest.TestCase):
 
     def test_windows_requires_appdata(self) -> None:
         with self.assertRaises(SystemExit):
-            install_agents.canonical_path(home=Path("C:/Users/tony"), appdata=None, win32=True)
+            install_agents.canonical_path(
+                home=Path("C:/Users/tony"), appdata=None, win32=True
+            )
 
     def test_opencode_is_xdg_on_both(self) -> None:
         home = Path("/home/tony")
@@ -101,6 +105,72 @@ class Place(unittest.TestCase):
                 dry_run=False,
             )
             self.assertEqual(rc, 1)
+
+
+class Skills(unittest.TestCase):
+    def _tree(self, root: Path) -> dict[str, Path]:
+        source = root / "src" / "AGENTS.md"
+        source.parent.mkdir(parents=True)
+        source.write_text("# hi\n", encoding="utf-8")
+        skills = root / "src" / "skills" / "jev-gate"
+        skills.mkdir(parents=True)
+        (skills / "SKILL.md").write_text("# gate\n", encoding="utf-8")
+        return {
+            "source": source,
+            "canonical": root / "agents" / "AGENTS.md",
+            "opencode": root / "opencode" / "AGENTS.md",
+            "skills_source": root / "src" / "skills",
+            "skills_dest": root / "skills",
+        }
+
+    def test_install_syncs_skills_dir(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            paths = self._tree(root)
+            rc = install_agents.install(
+                **paths,
+                force=False,
+                dry_run=False,
+            )
+            self.assertEqual(rc, 0)
+            copied = root / "skills" / "jev-gate" / "SKILL.md"
+            self.assertTrue(copied.is_file())
+            self.assertEqual(copied.read_text(encoding="utf-8"), "# gate\n")
+
+    def test_skills_skip_when_identical(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            kwargs = {**self._tree(root), "force": False, "dry_run": False}
+            self.assertEqual(install_agents.install(**kwargs), 0)
+            self.assertEqual(install_agents.install(**kwargs), 0)
+            backups = list(root.glob("skills.bak*"))
+            self.assertEqual(backups, [])
+
+    def test_missing_skills_source_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            paths = self._tree(root)
+            rc = install_agents.install(
+                **{**paths, "skills_source": root / "missing-skills"},
+                force=False,
+                dry_run=False,
+            )
+            self.assertEqual(rc, 1)
+
+    def test_stray_symlink_breaks_match(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            paths = self._tree(root)
+            dest = paths["skills_dest"]
+            mirror = dest / "jev-gate"
+            mirror.mkdir(parents=True)
+            target = paths["skills_source"] / "jev-gate" / "SKILL.md"
+            (mirror / "SKILL.md").write_text("# gate\n", encoding="utf-8")
+            try:
+                (dest / "stray").symlink_to(target.with_name("missing.md"))
+            except OSError:
+                self.skipTest("symlinks unavailable")
+            self.assertFalse(install_agents.dirs_match(paths["skills_source"], dest))
 
 
 if __name__ == "__main__":
