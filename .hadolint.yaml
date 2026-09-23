@@ -1,0 +1,14 @@
+# hadolint findings for the ops images. verify.py runs hadolint from the repo
+# root, which picks this file up.
+failure-threshold: warning
+
+ignored:
+    # DL3008: pinning apt package versions breaks these builds. The base image
+    # tag already pins the suite (ubuntu:24.04, python:3.12-slim-bookworm) and a
+    # mirror's patch level drifts daily, so `pkg=1.2.3-4` stops resolving within
+    # weeks. --no-install-recommends and the apt-lists cleanup are the real wins.
+    - DL3008
+    # DL3025: hadolint applies this to HEALTHCHECK CMD as well. Exec form cannot
+    # express `|| exit 1`, so shell form is required there. The real CMD and
+    # ENTRYPOINT directives in these images are already JSON.
+    - DL3025

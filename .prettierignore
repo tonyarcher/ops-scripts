@@ -1,0 +1,14 @@
+# Generated and vendored output. Only source is formatted.
+node_modules/
+__pycache__/
+.ruff_cache/
+.mypy_cache/
+.idea/
+tmp/
+var/
+
+# Real values live in an untracked .env; examples stay hand-laid out.
+config/examples/.env.example
+
+# Copied into place by setup.sh; formatting churns the installer's diff.
+dotfiles/bash/

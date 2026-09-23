@@ -6,6 +6,7 @@ from __future__ import annotations
 import re
 import unittest
 from pathlib import Path
+from typing import ClassVar
 
 ROOT = Path(__file__).resolve().parents[1]
 BREWFILE = ROOT / "Brewfile"
@@ -41,6 +42,11 @@ REQUIRED = frozenset(
         "git-delta",
         "ast-grep",
         "osv-scanner",
+        "shellcheck",
+        "shfmt",
+        "hadolint",
+        "ktlint",
+        "taplo",
     }
 )
 FORBIDDEN = frozenset(
@@ -75,6 +81,10 @@ def casks(text: str) -> set[str]:
 
 
 class BrewfileContents(unittest.TestCase):
+    text: ClassVar[str]
+    formulae: ClassVar[set[str]]
+    casks: ClassVar[set[str]]
+
     @classmethod
     def setUpClass(cls) -> None:
         cls.text = BREWFILE.read_text(encoding="utf-8")

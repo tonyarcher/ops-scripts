@@ -1,0 +1,25 @@
+# yamllint checks YAML correctness. Prettier owns layout (see .prettierrc.json),
+# so every layout rule is off here — the two must not disagree.
+extends: default
+
+rules:
+  braces: disable
+  brackets: disable
+  colons: disable
+  commas: disable
+  comments: disable
+  comments-indentation: disable
+  document-start: disable
+  empty-lines: disable
+  hyphens: disable
+  indentation: disable
+  key-duplicates: enable
+  key-ordering: disable
+  line-length: disable
+  new-line-at-end-of-file: enable
+  new-lines: enable
+  octal-values: enable
+  quoted-strings: disable
+  trailing-spaces: enable
+  truthy:
+    check-keys: false

@@ -1,0 +1,3 @@
+# ShellCheck runs from verify.py and the OpenCode formatter.
+external-sources=true
+severity=warning

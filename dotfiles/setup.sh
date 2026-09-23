@@ -14,7 +14,9 @@
 #       symlink, or a copy if the OS refuses the link).
 #    4. With --install-tools: apt-installs optional tools (ripgrep, eza, fzf,
 #       zoxide, htop, jq, tree, unzip, 7zip, bat, fd-find, curl, golang-go,
-#       openjdk-21) plus bun, uv, rustup, ruff, mypy, Gradle 9.4.
+#       openjdk-21, shellcheck, shfmt) plus bun, prettier, uv (ruff, mypy,
+#       sqlfluff, yamllint), Gradle 9.4, rustup, and the hadolint / ktlint
+#       release binaries and taplo (cargo).
 #  Idempotent: safe to run again after edits.
 # =============================================================================
 set -euo pipefail
@@ -46,7 +48,11 @@ for f in "${FILES[@]}"; do
         mv -v "$HOME/$f" "$BACKUP_DIR/$f" || true
     fi
 done
-[ "$(ls -A "$BACKUP_DIR")" ] && echo "Previous files backed up to: $BACKUP_DIR" || rmdir "$BACKUP_DIR"
+if [ "$(ls -A "$BACKUP_DIR")" ]; then
+    echo "Previous files backed up to: $BACKUP_DIR"
+else
+    rmdir "$BACKUP_DIR"
+fi
 
 # --- 2. Copy the new files -------------------------------------------------------
 for f in "${FILES[@]}"; do
@@ -60,7 +66,7 @@ INSTALL_TOOLS="${1:-}"
 if [ "$INSTALL_TOOLS" = "--install-tools" ]; then
     echo
     echo "Installing recommended optional tools..."
-    TOOLS=(curl ripgrep eza fzf zoxide htop jq tree unzip p7zip-full bat fd-find python3 golang-go openjdk-21-jdk-headless)
+    TOOLS=(curl ripgrep eza fzf zoxide htop jq tree unzip p7zip-full bat fd-find python3 golang-go openjdk-21-jdk-headless shellcheck shfmt)
     sudo apt update
     sudo apt install -y "${TOOLS[@]}"
     echo
@@ -86,6 +92,16 @@ if [ "$INSTALL_TOOLS" = "--install-tools" ]; then
     fi
 
     echo
+    echo "Installing prettier (npm global)..."
+    if command -v prettier >/dev/null 2>&1; then
+        echo "prettier already on PATH: $(command -v prettier)"
+    elif command -v npm >/dev/null 2>&1; then
+        npm install -g prettier
+    else
+        echo "npm not found; skip prettier (apt install npm)"
+    fi
+
+    echo
     echo "Installing uv (Python tools)..."
     if command -v uv >/dev/null 2>&1 || [ -x "$HOME/.local/bin/uv" ]; then
         echo "uv already installed"
@@ -96,6 +112,8 @@ if [ "$INSTALL_TOOLS" = "--install-tools" ]; then
     if command -v uv >/dev/null 2>&1; then
         uv tool install ruff
         uv tool install mypy
+        uv tool install sqlfluff
+        uv tool install yamllint
     fi
 
     echo
@@ -125,7 +143,7 @@ if [ "$INSTALL_TOOLS" = "--install-tools" ]; then
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
     fi
     export PATH="$HOME/go/bin:$HOME/.cargo/bin:$PATH"
-    echo "Installing review tools (gitleaks, osv-scanner, git-delta, ast-grep)..."
+    echo "Installing review tools (gitleaks, osv-scanner, git-delta, ast-grep, taplo)..."
     if command -v go >/dev/null 2>&1; then
         command -v gitleaks >/dev/null 2>&1 || go install github.com/zricethezav/gitleaks/v8@latest
         command -v osv-scanner >/dev/null 2>&1 || go install github.com/google/osv-scanner/v2/cmd/osv-scanner@latest
@@ -133,6 +151,25 @@ if [ "$INSTALL_TOOLS" = "--install-tools" ]; then
     if command -v cargo >/dev/null 2>&1; then
         command -v delta >/dev/null 2>&1 || cargo install git-delta --locked
         command -v sg >/dev/null 2>&1 || cargo install ast-grep --locked
+        command -v taplo >/dev/null 2>&1 || cargo install taplo-cli --locked
+    fi
+
+    echo
+    echo "Installing release-binary linters (hadolint, ktlint)..."
+    mkdir -p "$HOME/.local/bin"
+    # hadolint v2.12.0 -- bump the version here when updating.
+    if command -v hadolint >/dev/null 2>&1; then
+        echo "hadolint already on PATH: $(command -v hadolint)"
+    else
+        curl -fsSL "https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-Linux-x86_64" -o "$HOME/.local/bin/hadolint"
+        chmod +x "$HOME/.local/bin/hadolint"
+    fi
+    # ktlint 1.8.0 -- the artifact is self-executing on Linux; chmod +x is enough.
+    if command -v ktlint >/dev/null 2>&1; then
+        echo "ktlint already on PATH: $(command -v ktlint)"
+    else
+        curl -fsSL "https://github.com/ktlint/ktlint/releases/download/1.8.0/ktlint" -o "$HOME/.local/bin/ktlint"
+        chmod +x "$HOME/.local/bin/ktlint"
     fi
 fi
 
@@ -148,5 +185,8 @@ echo
 echo "============================================================"
 echo " dotfiles installed."
 echo " Open a new terminal, or run:  source ~/.bashrc"
-echo " Files installed:  $(IFS=' '; echo "${FILES[*]}")"
+echo " Files installed:  $(
+    IFS=' '
+    echo "${FILES[*]}"
+)"
 echo "============================================================"

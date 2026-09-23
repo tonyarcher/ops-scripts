@@ -52,17 +52,17 @@ Keep STE habits: short sentences, one idea, same word, imperative procedures, no
 
 ## Language pick
 
-| Job | Language |
-| --- | --- |
-| Product web UI | TypeScript + Lit (see that repo’s AGENTS.md) |
-| Website / HTTP API scripts | TypeScript on Bun or Node ≥23.6 |
-| Agent helpers, local data, SSH glue | Python 3 + stdlib |
-| Windows admin (services, PnP, audio) | PowerShell |
-| POSIX wrappers / cron glue | small `sh`/`bash` — no JSON/HTML parsing |
-| JVM backends / shared domain | Kotlin 2.2+ on JVM 21 (Java interop OK; new code is Kotlin) |
-| Services, CLIs, concurrency, static binaries | Go |
-| Memory-safe systems, no-GC hot paths, embeddable libs | Rust |
-| Containers / reverse proxy | Docker Compose + nginx (Rancher Desktop on GUI; engine on Linux servers) |
+| Job                                                   | Language                                                                 |
+| ----------------------------------------------------- | ------------------------------------------------------------------------ |
+| Product web UI                                        | TypeScript + Lit (see that repo’s AGENTS.md)                             |
+| Website / HTTP API scripts                            | TypeScript on Bun or Node ≥23.6                                          |
+| Agent helpers, local data, SSH glue                   | Python 3 + stdlib                                                        |
+| Windows admin (services, PnP, audio)                  | PowerShell                                                               |
+| POSIX wrappers / cron glue                            | small `sh`/`bash` — no JSON/HTML parsing                                 |
+| JVM backends / shared domain                          | Kotlin 2.2+ on JVM 21 (Java interop OK; new code is Kotlin)              |
+| Services, CLIs, concurrency, static binaries          | Go                                                                       |
+| Memory-safe systems, no-GC hot paths, embeddable libs | Rust                                                                     |
+| Containers / reverse proxy                            | Docker Compose + nginx (Rancher Desktop on GUI; engine on Linux servers) |
 
 Do not start Rust, Go, Kotlin, or a new JVM module “for practice.” Use them when
 the job matches the table. Product repos may forbid some of these (ops-scripts
@@ -130,13 +130,13 @@ Installed by `windows/scripts/install-tools.ps1` and
 `dotfiles/setup.sh --install-tools` (Mac: Brewfile). Use them when they are
 on PATH. Do not add a scanning SaaS.
 
-| Tool | Job |
-| --- | --- |
-| `ast-grep` (`sg`) | Structural search (XSS, SQL concat, `innerHTML`). Prefer this over inventing a regex. |
-| `gitleaks detect` | Secrets in git history and the working tree. |
-| `osv-scanner -r .` | Dependency CVEs. Pair with `npm audit` in Node repos. |
-| `delta` | Readable git diffs when present. |
-| `ttsc-graph` MCP | TypeScript callers/callees when the project configures it in `opencode.json`. |
+| Tool               | Job                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------- |
+| `ast-grep` (`sg`)  | Structural search (XSS, SQL concat, `innerHTML`). Prefer this over inventing a regex. |
+| `gitleaks detect`  | Secrets in git history and the working tree.                                          |
+| `osv-scanner -r .` | Dependency CVEs. Pair with `npm audit` in Node repos.                                 |
+| `delta`            | Readable git diffs when present.                                                      |
+| `ttsc-graph` MCP   | TypeScript callers/callees when the project configures it in `opencode.json`.         |
 
 ## Python
 
@@ -207,18 +207,18 @@ line on stdout/stderr. Prefer OpenTelemetry-shaped names so traces glue on later
 {"ts":"2026-09-09T17:00:00.000Z","level":"info","msg":"listening","service":"rss-api","port":3001}
 ```
 
-| Field | When |
-| --- | --- |
-| `ts` | Always. UTC RFC3339 with milliseconds. |
-| `level` | Always. `debug` \| `info` \| `warn` \| `error`. Process death: `error` then exit. |
-| `msg` | Always. Short stable phrase, not an interpolated novel. |
-| `service` | Always. Compose service / binary name (`fitness-api`, `radio-api`). |
-| `request_id` | HTTP or any unit of work. Honor `X-Request-ID` or W3C `traceparent`; otherwise generate. Echo `X-Request-ID` on the response. |
-| `trace_id` / `span_id` | When a `traceparent` is present or you create a span. Hex, no dashes. |
-| `session_id` | When there is an authenticated session. Opaque id, **not** the cookie or token. |
-| `method` `path` `status` `duration_ms` | HTTP request summary (one line per request). |
-| `err` | On failure: `{ "type", "message" }`. Stack only at `debug` or for 5xx. |
-| extra keys | Event-specific (`port`, `feed_id`, …). Keep them scalar. |
+| Field                                  | When                                                                                                                          |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `ts`                                   | Always. UTC RFC3339 with milliseconds.                                                                                        |
+| `level`                                | Always. `debug` \| `info` \| `warn` \| `error`. Process death: `error` then exit.                                             |
+| `msg`                                  | Always. Short stable phrase, not an interpolated novel.                                                                       |
+| `service`                              | Always. Compose service / binary name (`fitness-api`, `radio-api`).                                                           |
+| `request_id`                           | HTTP or any unit of work. Honor `X-Request-ID` or W3C `traceparent`; otherwise generate. Echo `X-Request-ID` on the response. |
+| `trace_id` / `span_id`                 | When a `traceparent` is present or you create a span. Hex, no dashes.                                                         |
+| `session_id`                           | When there is an authenticated session. Opaque id, **not** the cookie or token.                                               |
+| `method` `path` `status` `duration_ms` | HTTP request summary (one line per request).                                                                                  |
+| `err`                                  | On failure: `{ "type", "message" }`. Stack only at `debug` or for 5xx.                                                        |
+| extra keys                             | Event-specific (`port`, `feed_id`, …). Keep them scalar.                                                                      |
 
 `LOG_LEVEL` env (default `info` in deploy, `debug` ok in dev). Drop records below the threshold. Do not use `console.log` for daemons once JSON logging exists.
 
@@ -250,7 +250,7 @@ service. Browser IndexedDB/localStorage is not this rule.
 
 Runtime by machine:
 
-- **Windows** and **Linux GUI**: Rancher Desktop for *local* engine work. Talk to
+- **Windows** and **Linux GUI**: Rancher Desktop for _local_ engine work. Talk to
   it with `docker` / `docker compose` (dockerd/Moby compatibility enabled). Do
   not install or assume Docker Desktop.
 - **Linux server** (no GUI): Docker Engine + the compose plugin. This is also
@@ -307,13 +307,13 @@ or rewrite history unless they ask.
 
 **Where values live**
 
-| Kind | Where |
-| --- | --- |
-| Placeholders (committed) | `.env.example` next to the consumer, or `config/examples/.env.example` |
-| Secrets for a repo | Untracked `.env` beside the thing that reads it (`deploy/.env`, `app/.env`) |
-| Secrets for a one-off | Process environment (`export` / `$env:`). Do not paste into tracked files |
-| Toolchain (PATH, `JAVA_HOME`, `GOPATH`) | Shell profile (`~/.bash_env`, PowerShell profile) — **not** API tokens |
-| Docker | `env_file:` / `environment:` at **run** from an untracked `.env`. Never `ARG`/`ENV` a secret at **build**, never `COPY .env` into an image |
+| Kind                                    | Where                                                                                                                                      |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Placeholders (committed)                | `.env.example` next to the consumer, or `config/examples/.env.example`                                                                     |
+| Secrets for a repo                      | Untracked `.env` beside the thing that reads it (`deploy/.env`, `app/.env`)                                                                |
+| Secrets for a one-off                   | Process environment (`export` / `$env:`). Do not paste into tracked files                                                                  |
+| Toolchain (PATH, `JAVA_HOME`, `GOPATH`) | Shell profile (`~/.bash_env`, PowerShell profile) — **not** API tokens                                                                     |
+| Docker                                  | `env_file:` / `environment:` at **run** from an untracked `.env`. Never `ARG`/`ENV` a secret at **build**, never `COPY .env` into an image |
 
 Do not log or print secrets (including compose config dumps and debug flags).
 Do not put tokens in `AGENTS.md`, Dockerfiles, or committed YAML. Empty or

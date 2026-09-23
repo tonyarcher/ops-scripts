@@ -1,71 +1,69 @@
 {
-  "$schema": "https://opencode.ai/config.json",
-  "default_agent": "build",
-  "mcp": {
-    "servers": {
-      "jev-mcp": {
-        "type": "local",
-        "command": [
-          "npx",
-          "-y",
-          "jev-mcp@0.4.0"
-        ],
-        "disabled": true
-      }
+    "$schema": "https://opencode.ai/config.json",
+    "default_agent": "build",
+    "permission": {
+        "edit": "allow"
+    },
+    "tools": {
+        "jev-mcp_*": false
+    },
+    "mcp": {
+        "jev-mcp": {
+            "type": "local",
+            "command": ["npx", "-y", "jev-mcp@0.4.0"],
+            "enabled": false
+        }
+    },
+    "agent": {
+        "plan": {
+            "mode": "primary",
+            "model": "xai/grok-4.6#max",
+            "description": "Planning - Grok via X subscription (max reasoning)",
+            "permission": {
+                "edit": {
+                    "*": "deny",
+                    "~/.opencode/plan/*": "allow"
+                }
+            },
+            "prompt": "You are the planner. Produce a short task list naming the modules touched, the risks, and which verification/tests must be added to cover the change. The last step must be an independent review by the review agent before any commit. Never edit files. Never commit. Use explore only to locate files and symbols. Do not treat grep hits as understanding; if you need behavior or control flow, read the code. Hand the plan to the build agent."
+        },
+        "build": {
+            "mode": "primary",
+            "model": "opencode-go/muse-spark-1.3-contributor#high",
+            "description": "Main implementer after design",
+            "permission": {
+                "edit": "allow"
+            },
+            "tools": {
+                "jev-mcp_*": true
+            },
+            "prompt": "You are the implementer. Follow documented project conventions (AGENTS.md, CONTRIBUTING.md, or equivalent) strictly. Use explore only to locate files and symbols. Do not treat grep hits as understanding; read the surrounding code yourself (or after explore returns paths) before changing behavior. Run the repository's canonical verification (tests, type checks, lints, builds) as discovered from its configuration and ensure it passes before reporting done. If you touched core logic, data, or API modules, ensure new behavior is covered by tests. Never run git commit or git push. Never modify AGENTS.md or opencode.json unless the task explicitly asks. After implementation and verification, you MUST dispatch the review agent on the full uncommitted diff and wait for its verdict. Do not treat the work as complete on REQUEST-CHANGES. Fix findings and re-dispatch review. On re-dispatch, name the files changed since the last review so the reviewer scopes to that delta instead of re-tracing the full diff. A commit is forbidden until review returns APPROVE. Finish with a summary: files changed, verification added, review verdict, and the exact verification command output. After verification passes, run the jev-gate skill (one batched jev_ask call on the full diff) and the jev-route skill when a handler choice is ambiguous. If jev-mcp is unavailable or errors, say so and proceed without it. Never use Jev to write code, prose, or plans; it returns typed judgments only."
+        },
+        "review": {
+            "mode": "all",
+            "model": "opencode-go/deepseek-v4-flash#max",
+            "description": "Reports bugs only; Blocker/Major/Minor; no fixes, no deep dives",
+            "prompt": "You are the reviewer. Find bugs, report them, stop. Read the diff and the surrounding code. Do not run full unit tests, linters, type checks, builds, or the repository verifier; the build agent already verified. Run a single targeted command only to settle a behavior question that reading cannot. Never edit, write, or commit files, and never propose patches. Do not propose deep solutions or redesigns; report the issue and let the build agent fix it. Responses obey these rules: no code blocks, no diffs, no pseudo-code, no fix suggestions, no alternative implementations. Each finding is Blocker, Major, or Minor, one to three sentences: what breaks, file:line, and one piece of evidence (a quote, a command result, or the call path). Nothing else. If a finding needs a deep dive to prove, report the suspicion as Minor with the evidence you have; do not dig. Return APPROVE when there are no findings, otherwise REQUEST-CHANGES, with the findings as a short list.",
+            "permission": {
+                "bash": "allow",
+                "edit": "deny"
+            }
+        },
+        "general": {
+            "mode": "subagent",
+            "model": "ai/grok-4.6#high",
+            "description": "Write",
+            "permission": {
+                "edit": "allow"
+            }
+        },
+        "explore": {
+            "mode": "subagent",
+            "model": "opencode-go/muse-spark-1.3-contributor",
+            "description": "Locate, then read enough to explain. Do not stop at grep hits.",
+            "permission": {
+                "edit": "deny"
+            }
+        }
     }
-  },
-  "permissions": [
-    {
-      "action": "edit",
-      "resource": "*",
-      "effect": "allow"
-    }
-  ],
-  "agents": {
-    "plan": {
-      "mode": "primary",
-      "model": "xai/grok-4.6#max",
-      "description": "Planning - Grok via X subscription (max reasoning)",
-      "permissions": [
-        { "action": "edit", "resource": "*", "effect": "deny" },
-        { "action": "edit", "resource": "~/.opencode/plan/*", "effect": "allow" }
-      ],
-      "system": "You are the planner. Produce a short task list naming the modules touched, the risks, and which verification/tests must be added to cover the change. The last step must be an independent review by the review agent before any commit. Never edit files. Never commit. Use explore only to locate files and symbols. Do not treat grep hits as understanding; if you need behavior or control flow, read the code. Hand the plan to the build agent."
-    },
-    "build": {
-      "mode": "primary",
-      "model": "opencode-go/muse-spark-1.3-contributor#high",
-      "description": "Main implementer after design",
-      "permissions": [
-        { "action": "edit", "resource": "*", "effect": "allow" }
-      ],
-      "system": "You are the implementer. Follow documented project conventions (AGENTS.md, CONTRIBUTING.md, or equivalent) strictly. Use explore only to locate files and symbols. Do not treat grep hits as understanding; read the surrounding code yourself (or after explore returns paths) before changing behavior. Run the repository's canonical verification (tests, type checks, lints, builds) as discovered from its configuration and ensure it passes before reporting done. If you touched core logic, data, or API modules, ensure new behavior is covered by tests. Never run git commit or git push. Never modify AGENTS.md or opencode.json unless the task explicitly asks. After implementation and verification, you MUST dispatch the review agent on the full uncommitted diff and wait for its verdict. Do not treat the work as complete on REQUEST-CHANGES. Fix findings and re-dispatch review. On re-dispatch, name the files changed since the last review so the reviewer scopes to that delta instead of re-tracing the full diff. A commit is forbidden until review returns APPROVE. Finish with a summary: files changed, verification added, review verdict, and the exact verification command output."
-    },
-    "review": {
-      "mode": "all",
-      "model": "opencode-go/deepseek-v4-flash#max",
-      "description": "Functionality-first principal reviewer; traces behavior, not just the diff; Blocker/Major/Minor",
-      "system": "You are the reviewer. Review the code to the best of your ability by reading the diff and the surrounding code. Do not run full unit tests, linters, type checks, or builds; the build agent already verified. Run a targeted command or snippet only to clarify behavior that reading cannot resolve. Use explore only to locate files and symbols. Do not treat grep hits as understanding; read the surrounding code. Never edit files. Never commit. Report Blockers, Majors, and Minors with file and line. Return APPROVE or REQUEST-CHANGES.",
-      "permissions": [
-        { "action": "shell", "resource": "*", "effect": "allow" },
-        { "action": "edit", "resource": "*", "effect": "deny" }
-      ]
-    },
-    "general": {
-      "mode": "subagent",
-      "model": "ai/grok-4.6#high",
-      "description": "Write",
-      "permissions": [
-        { "action": "edit", "resource": "*", "effect": "allow" }
-      ]
-    },
-    "explore": {
-      "mode": "subagent",
-      "model": "opencode-go/muse-spark-1.3-contributor",
-      "description": "Locate, then read enough to explain. Do not stop at grep hits.",
-      "permissions": [
-        { "action": "edit", "resource": "*", "effect": "deny" }
-      ]
-    }
-  }
 }

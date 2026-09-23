@@ -1,7 +1,10 @@
-# Windows dev-tool installer. Mirrors `dotfiles/setup.sh --install-tools`
+﻿# Windows dev-tool installer. Mirrors `dotfiles/setup.sh --install-tools`
 # (ripgrep, eza, fzf, zoxide, jq, bat, fd, 7zip) plus vim and the AI/power-user
 # extras proven on this box: gh, pwsh 7, lazygit, uv, opencode, ffmpeg, Go,
-# JDK 21, Gradle 9.4 (official zip), rustup, git-delta, gitleaks, osv-scanner, ast-grep. uv puts ruff/mypy
+# JDK 21, Gradle 9.4 (official zip), rustup, git-delta, gitleaks, osv-scanner,
+# ast-grep, and the formatters/linters verify.py runs: shellcheck, shfmt,
+# hadolint, taplo, ktlint, prettier, PSScriptAnalyzer. uv puts
+# ruff/mypy/sqlfluff/yamllint
 # in ~/.local/bin; this script persists that
 # directory on the user PATH so OpenCode and new shells can find ruff.
 # Also installs the user-wide AGENTS.md pointer (symlink or copy).
@@ -54,15 +57,19 @@ $Tools = @(
     @{ Id = 'Rustlang.Rustup'; Cmd = 'rustup' }
     @{ Id = 'dandavison.delta'; Cmd = 'delta' }
     @{ Id = 'Gitleaks.Gitleaks'; Cmd = 'gitleaks' }
+    @{ Id = 'koalaman.shellcheck'; Cmd = 'shellcheck' }
+    @{ Id = 'mvdan.shfmt'; Cmd = 'shfmt' }
+    @{ Id = 'hadolint.hadolint'; Cmd = 'hadolint' }
+    @{ Id = 'tamasfe.taplo'; Cmd = 'taplo' }
 )
 
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 
-function Update-SessionPath {
+function Sync-SessionPath {
     # winget edits the registry PATH; refresh this process so just-installed
     # tools resolve without a shell restart.
     $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
-        [System.Environment]::GetEnvironmentVariable('Path', 'User')
+    [System.Environment]::GetEnvironmentVariable('Path', 'User')
 }
 
 function Test-ToolUsable([string]$Cmd) {
@@ -92,10 +99,11 @@ function Install-WingetTool([string]$Id, [string]$Cmd) {
         Write-Host "    FAIL $Id : winget exit code $LASTEXITCODE"
         return
     }
-    Update-SessionPath
+    Sync-SessionPath
     if (Test-ToolUsable $Cmd) {
         Write-Host "    installed $Id"
-    } else {
+    }
+    else {
         Write-Host "    FAIL $Id : installed but $Cmd not on PATH (restart the shell and retry)"
     }
 }
@@ -111,7 +119,7 @@ function Install-Fzf {
         return
     }
     winget install --id junegunn.fzf --silent --accept-source-agreements --accept-package-agreements
-    Update-SessionPath
+    Sync-SessionPath
     if (Test-ToolUsable 'fzf') {
         Write-Host '    installed junegunn.fzf'
         return
@@ -126,10 +134,11 @@ function Install-Fzf {
         Write-Host "    FAIL fzf go fallback : go exit code $LASTEXITCODE"
         return
     }
-    Update-SessionPath
+    Sync-SessionPath
     if (Test-ToolUsable 'fzf') {
         Write-Host '    installed fzf via go (~/go/bin)'
-    } else {
+    }
+    else {
         Write-Host '    FAIL fzf: go build ok but fzf not on PATH (restart the shell and retry)'
     }
 }
@@ -161,7 +170,7 @@ function Ensure-UvToolPath {
         return
     }
     Add-UserPath $uvBin
-    Update-SessionPath
+    Sync-SessionPath
     if (Test-ToolUsable 'ruff') {
         Write-Host '    ruff on PATH'
         return
@@ -169,12 +178,12 @@ function Ensure-UvToolPath {
     Write-Host "    FAIL ruff: not on PATH after adding $uvBin (restart the shell)"
 }
 
-function Install-UvTools {
+function Install-UvToolset {
     if (-not (Test-ToolUsable 'uv')) {
         Write-Host '    skip: uv not on PATH'
         return
     }
-    foreach ($pkg in @('ruff', 'mypy')) {
+    foreach ($pkg in @('ruff', 'mypy', 'sqlfluff', 'yamllint')) {
         if ((-not $Force) -and (Test-ToolUsable $pkg)) {
             Write-Host "    already have $pkg -- skip"
             continue
@@ -186,7 +195,8 @@ function Install-UvTools {
         uv tool install $pkg
         if ($LASTEXITCODE -ne 0) {
             Write-Host "    FAIL uv tool install $pkg : exit $LASTEXITCODE"
-        } else {
+        }
+        else {
             Write-Host "    installed $pkg (uv tool)"
         }
     }
@@ -234,12 +244,13 @@ function Install-GoPkg([string]$Pkg, [string]$Cmd) {
         Write-Host "    FAIL go install $Pkg : exit $LASTEXITCODE"
         return
     }
-    Update-SessionPath
+    Sync-SessionPath
     Add-UserPath (Join-Path $env:USERPROFILE 'go\bin')
-    Update-SessionPath
+    Sync-SessionPath
     if (Test-ToolUsable $Cmd) {
         Write-Host "    installed $Cmd (go)"
-    } else {
+    }
+    else {
         Write-Host "    FAIL $Cmd : go install ok but not on PATH"
     }
 }
@@ -262,12 +273,13 @@ function Install-CargoPkg([string]$Pkg, [string]$Cmd) {
         Write-Host "    FAIL cargo install $Pkg : exit $LASTEXITCODE"
         return
     }
-    Update-SessionPath
+    Sync-SessionPath
     Add-UserPath (Join-Path $env:USERPROFILE '.cargo\bin')
-    Update-SessionPath
+    Sync-SessionPath
     if (Test-ToolUsable $Cmd) {
         Write-Host "    installed $Cmd (cargo)"
-    } else {
+    }
+    else {
         Write-Host "    FAIL $Cmd : cargo install ok but not on PATH"
     }
 }
@@ -291,10 +303,11 @@ function Install-NpmGlobal([string]$Pkg, [string]$Cmd) {
         Write-Host "    FAIL npm install -g $Pkg : exit $LASTEXITCODE"
         return
     }
-    Update-SessionPath
+    Sync-SessionPath
     if (Test-ToolUsable $Cmd) {
         Write-Host "    installed $Cmd (npm)"
-    } else {
+    }
+    else {
         Write-Host "    FAIL $Cmd : npm install ok but not on PATH"
     }
 }
@@ -320,15 +333,69 @@ function Install-Gradle {
     tar -xf $zip -C $opt
     Remove-Item $zip -ErrorAction SilentlyContinue
     Add-UserPath $bin
-    Update-SessionPath
+    Sync-SessionPath
     if (Test-ToolUsable 'gradle') {
         Write-Host "    installed Gradle $ver"
-    } else {
+    }
+    else {
         Write-Host "    FAIL gradle: unpacked but not on PATH (restart the shell)"
     }
 }
 
-function Install-ReviewTools {
+function Install-Ktlint {
+    # ktlint is not in winget. The release artifact is a self-executing jar;
+    # a local ktlint.bat wrapper gives Windows a PATH shim for it.
+    $ver = '1.8.0'
+    $dest = Join-Path $env:USERPROFILE '.local\opt\ktlint'
+    $jar = Join-Path $dest 'ktlint'
+    $bat = Join-Path $dest 'ktlint.bat'
+    if ((-not $Force) -and ((Test-ToolUsable 'ktlint') -or (Test-Path $bat))) {
+        Write-Host '    already have ktlint -- skip'
+        if (Test-Path $bat) { Add-UserPath $dest }
+        return
+    }
+    if ($DryRun) {
+        Write-Host "    would install ktlint $ver"
+        return
+    }
+    New-Item -ItemType Directory -Force -Path $dest | Out-Null
+    Invoke-WebRequest -Uri "https://github.com/ktlint/ktlint/releases/download/$ver/ktlint" -OutFile $jar
+    Set-Content -Path $bat -Value @('@echo off', 'java -jar "%~dp0ktlint" %*')
+    Add-UserPath $dest
+    Sync-SessionPath
+    if (Test-ToolUsable 'ktlint') {
+        Write-Host "    installed ktlint $ver"
+    }
+    else {
+        Write-Host '    FAIL ktlint: downloaded but not on PATH (restart the shell)'
+    }
+}
+
+function Install-PSScriptAnalyzer {
+    if (-not (Test-ToolUsable 'pwsh')) {
+        Write-Host '    skip: pwsh not on PATH'
+        return
+    }
+    pwsh -NoProfile -Command "if (Get-Module -ListAvailable PSScriptAnalyzer) { exit 0 } else { exit 1 }"
+    $havePssa = ($LASTEXITCODE -eq 0)
+    if ((-not $Force) -and $havePssa) {
+        Write-Host '    already have PSScriptAnalyzer -- skip'
+        return
+    }
+    if ($DryRun) {
+        Write-Host '    would install PSScriptAnalyzer (PowerShell Gallery, CurrentUser)'
+        return
+    }
+    pwsh -NoProfile -Command "Install-Module -Name PSScriptAnalyzer -Scope CurrentUser -Force -AllowClobber"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "    FAIL PSScriptAnalyzer : pwsh exit $LASTEXITCODE"
+    }
+    else {
+        Write-Host '    installed PSScriptAnalyzer'
+    }
+}
+
+function Install-ReviewToolset {
     Install-GoPkg 'github.com/zricethezav/gitleaks/v8@latest' 'gitleaks'
     Install-GoPkg 'github.com/google/osv-scanner/v2/cmd/osv-scanner@latest' 'osv-scanner'
     Install-NpmGlobal '@ast-grep/cli' 'sg'
@@ -353,11 +420,20 @@ Install-Fzf
 Write-Host '==> Gradle (official zip)'
 Install-Gradle
 
-Write-Host '==> python tools (ruff, mypy) via uv'
-Install-UvTools
+Write-Host '==> python tools (ruff, mypy, sqlfluff, yamllint) via uv'
+Install-UvToolset
 
 Write-Host '==> review tools (gitleaks, osv-scanner, delta, ast-grep)'
-Install-ReviewTools
+Install-ReviewToolset
+
+Write-Host '==> prettier (npm global)'
+Install-NpmGlobal 'prettier' 'prettier'
+
+Write-Host '==> ktlint (release jar under .local\opt)'
+Install-Ktlint
+
+Write-Host '==> PSScriptAnalyzer (PowerShell Gallery)'
+Install-PSScriptAnalyzer
 
 
 Write-Host '==> user-wide AGENTS.md (OpenCode pointer)'

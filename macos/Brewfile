@@ -30,3 +30,10 @@ brew "gitleaks"
 brew "git-delta"
 brew "ast-grep"
 brew "osv-scanner"
+# Formatters/linters run by verify.py. prettier comes from npm and
+# sqlfluff/yamllint from uv (see macos/install-tools.sh).
+brew "shellcheck"
+brew "shfmt"
+brew "hadolint"
+brew "ktlint"
+brew "taplo"

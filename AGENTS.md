@@ -17,13 +17,13 @@ Do not turn this repo into a web app, monorepo product, or shared framework. No 
 
 Pick Python first. TypeScript is only for browser view manipulation.
 
-| Job | Language | How to run |
-| --- | --- | --- |
-| Website / HTTP API, scrapers, importers, servers | Python 3 (stdlib `urllib`, `http.server`, `sqlite3`) | `python path/to/script.py` |
-| Local files, data munging, reports that never leave the box | Python 3 | `python path/to/script.py` |
-| SSH, remote shells, server glue, cron wrappers | Python 3, or a small POSIX `sh`/`bash` script if it is genuinely just glue | `python …` or `./script.sh` |
-| Browser view manipulation only (DOM) | TypeScript | `node path/to/script.ts` |
-| Windows services, PnP, audio, other Win32 admin | PowerShell 5.1+ under `windows/` | `powershell -File windows/scripts/…` |
+| Job                                                         | Language                                                                   | How to run                           |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------ |
+| Website / HTTP API, scrapers, importers, servers            | Python 3 (stdlib `urllib`, `http.server`, `sqlite3`)                       | `python path/to/script.py`           |
+| Local files, data munging, reports that never leave the box | Python 3                                                                   | `python path/to/script.py`           |
+| SSH, remote shells, server glue, cron wrappers              | Python 3, or a small POSIX `sh`/`bash` script if it is genuinely just glue | `python …` or `./script.sh`          |
+| Browser view manipulation only (DOM)                        | TypeScript                                                                 | `node path/to/script.ts`             |
+| Windows services, PnP, audio, other Win32 admin             | PowerShell 5.1+ under `windows/`                                           | `powershell -File windows/scripts/…` |
 
 Rules:
 
@@ -33,7 +33,7 @@ Rules:
 - Shell is for wrappers, cron entries, and `ssh` one-liners — not for parsing HTML or calling JSON APIs (use Python for that).
 - Windows-only work lives in `windows/`. Do not put `.ps1` files in `cron/`, `importers/`, `data/`, `sites/`, or `dotfiles/`. Those trees are Linux/WSL or OS-agnostic.
 
-`windows/scripts/install-tools.ps1` (and `dotfiles/setup.sh --install-tools`, `macos/Brewfile`) also install review CLIs: gitleaks, osv-scanner, ast-grep, git-delta.
+`windows/scripts/install-tools.ps1` (and `dotfiles/setup.sh --install-tools`, `macos/Brewfile`) also install review CLIs: gitleaks, osv-scanner, ast-grep, git-delta. They also install the formatters and linters `verify.py` runs.
 
 ### TypeScript (browser views only)
 
@@ -48,7 +48,7 @@ Rules:
 - Target the stdlib first (`pathlib`, `json`, `csv`, `subprocess`, `argparse`, `urllib`, `http.server`, `sqlite3`).
 - HTTP servers use stdlib `http.server` (or `ThreadingHTTPServer`). HTTP clients use `urllib`. Rate-limit remote calls, retry with backoff, set timeouts. Never log tokens.
 - If the job is SSH or remote shell, use `subprocess` with an explicit argv list, never `shell=True` with interpolated strings.
-- Lint: `ruff check` / `ruff format`. Complexity `C901` ≤ 15; functions ≤ ~30 lines. `mypy --strict` when the script is more than a one-liner.
+- Lint and types are `python verify.py`; `ruff.toml` holds the rules. Functions ≤ ~30 lines.
 - Shared Python helpers go in `lib/` (e.g. `lib/sshutil.py`).
 - No `requirements.txt` for a one-file stdlib script. If a script truly needs a package, put a pinned `requirements.txt` next to that script only.
 - Header comment plus `argparse` (or a few `sys.argv` checks) so a human can run it without reading the whole file.
@@ -93,7 +93,7 @@ Conventions:
 3. Follow the language policy above.
 4. Add a 5–15 line header: what it does, how to run it, required env vars, anything that can destroy data.
 5. Read secrets from the environment. Add placeholders to `config/examples/.env.example` if they are new.
-6. Do not add a root `package.json`, linter, test harness, or framework “for later.”
+6. Do not add a root `package.json`, linter, test harness, or framework “for later.” `verify.py` and its config files are the sanctioned tooling — extend those instead of adding new ones.
 7. Do not rewrite neighboring scripts to match the new one.
 
 ## Secrets and safety
@@ -120,9 +120,9 @@ Conventions:
 
 There is no repo-wide test suite. Before finishing:
 
+- `python verify.py` passes (`--fix` applies the formatters). It owns the full tool list.
 - The new or changed script is in the right folder and named in kebab-case (Python modules use `snake_case` so they import).
 - It runs the way the header says (`python …`).
 - `python -m unittest` (or `python path/to/test_*.py`) passes for scripts that have tests.
-- `ruff check`, `ruff format --check`, and `mypy --strict` pass for changed Python files.
 - No secrets landed in the diff.
 - Existing scripts you did not need were not touched.
