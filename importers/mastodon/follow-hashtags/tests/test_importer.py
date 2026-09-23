@@ -8,12 +8,14 @@ import sys
 import unittest
 from collections.abc import Callable
 from pathlib import Path
-from types import ModuleType
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def _load(name: str, filename: str) -> ModuleType:
+# The handle is a module created at runtime, so it has no static type; a
+# concrete return type would make every attribute access wrong.
+def _load(name: str, filename: str) -> Any:  # noqa: ANN401
     spec = importlib.util.spec_from_file_location(name, ROOT / filename)
     assert spec is not None and spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
@@ -59,8 +61,8 @@ class ImporterTests(unittest.TestCase):
                 config=importer.ImportConfig(apply=False),
                 tags=["cats", "dogs"],
                 invalid=[{"raw": "bad tag", "reason": "contains whitespace"}],
-                client=client,  # type: ignore[arg-type]
-                store=store,  # type: ignore[arg-type]
+                client=client,
+                store=store,
             )
             self.assertEqual(client.calls, [])
             self.assertEqual(summary.dry_run, 2)
@@ -78,8 +80,8 @@ class ImporterTests(unittest.TestCase):
                 config=importer.ImportConfig(apply=True),
                 tags=["cats", "dogs"],
                 invalid=[],
-                client=client,  # type: ignore[arg-type]
-                store=store,  # type: ignore[arg-type]
+                client=client,
+                store=store,
             )
             self.assertEqual(client.calls, ["cats", "dogs"])
             self.assertEqual(summary.followed, 2)
@@ -97,8 +99,8 @@ class ImporterTests(unittest.TestCase):
                 config=importer.ImportConfig(apply=True),
                 tags=["cats", "dogs", "birds"],
                 invalid=[],
-                client=client,  # type: ignore[arg-type]
-                store=store,  # type: ignore[arg-type]
+                client=client,
+                store=store,
             )
             self.assertEqual(client.calls, ["birds"])
             self.assertEqual(summary.followed, 1)
@@ -114,8 +116,8 @@ class ImporterTests(unittest.TestCase):
                 config=importer.ImportConfig(apply=True, retry_failed=False),
                 tags=["cats"],
                 invalid=[],
-                client=FakeClient(_followed),  # type: ignore[arg-type]
-                store=store,  # type: ignore[arg-type]
+                client=FakeClient(_followed),
+                store=store,
             )
             self.assertEqual(no_retry.followed, 0)
             self.assertEqual(no_retry.skipped, 1)
@@ -123,8 +125,8 @@ class ImporterTests(unittest.TestCase):
                 config=importer.ImportConfig(apply=True, retry_failed=True),
                 tags=["cats"],
                 invalid=[],
-                client=FakeClient(_followed),  # type: ignore[arg-type]
-                store=store,  # type: ignore[arg-type]
+                client=FakeClient(_followed),
+                store=store,
             )
             self.assertEqual(retry.followed, 1)
             row = store.get("cats")
@@ -141,8 +143,8 @@ class ImporterTests(unittest.TestCase):
                 config=importer.ImportConfig(apply=True, max=2),
                 tags=["a", "b", "c", "d", "e"],
                 invalid=[],
-                client=client,  # type: ignore[arg-type]
-                store=store,  # type: ignore[arg-type]
+                client=client,
+                store=store,
             )
             self.assertEqual(client.calls, ["a", "b"])
             self.assertEqual(summary.followed, 2)
@@ -157,8 +159,8 @@ class ImporterTests(unittest.TestCase):
                 config=importer.ImportConfig(apply=True),
                 tags=["cats"],
                 invalid=[{"raw": "bad tag", "reason": "contains whitespace"}],
-                client=FakeClient(_followed),  # type: ignore[arg-type]
-                store=store,  # type: ignore[arg-type]
+                client=FakeClient(_followed),
+                store=store,
             )
             self.assertEqual(summary.invalid, 1)
             row = store.get("bad tag")
@@ -180,8 +182,8 @@ class ImporterTests(unittest.TestCase):
                     config=importer.ImportConfig(apply=True),
                     tags=["cats"],
                     invalid=[],
-                    client=FakeClient(_fatal),  # type: ignore[arg-type]
-                    store=store,  # type: ignore[arg-type]
+                    client=FakeClient(_fatal),
+                    store=store,
                 )
         finally:
             store.close()
@@ -189,9 +191,10 @@ class ImporterTests(unittest.TestCase):
     def test_fatal_subclass_aborts(self) -> None:
         store = state.open_progress_store(":memory:")
         try:
-
-            class SubFatal(mastodon_client.FatalApiError):
-                pass
+            # Built via type() because mypy cannot take a base class from a
+            # runtime-loaded module handle. The base class is the same object.
+            class SubFatal(mastodon_client.FatalApiError):  # type: ignore[misc,name-defined]
+                """Raised in place of the real error to prove it aborts."""
 
             def _fatal(name: str) -> object:
                 raise SubFatal("forbidden (403)", 403)
@@ -201,8 +204,8 @@ class ImporterTests(unittest.TestCase):
                     config=importer.ImportConfig(apply=True),
                     tags=["cats"],
                     invalid=[],
-                    client=FakeClient(_fatal),  # type: ignore[arg-type]
-                    store=store,  # type: ignore[arg-type]
+                    client=FakeClient(_fatal),
+                    store=store,
                 )
         finally:
             store.close()
@@ -215,8 +218,8 @@ class ImporterTests(unittest.TestCase):
                 config=importer.ImportConfig(apply=True),
                 tags=["a", "b", "c"],
                 invalid=[],
-                client=client,  # type: ignore[arg-type]
-                store=store,  # type: ignore[arg-type]
+                client=client,
+                store=store,
                 should_stop=lambda: len(client.calls) >= 1,
             )
             self.assertEqual(len(client.calls), 1)

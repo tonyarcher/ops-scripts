@@ -12,21 +12,21 @@ Sources are merged and deduped. Progress is stored in a SQLite state file so re-
 
 ## Flags
 
-| Flag | Default | Description |
-| --- | --- | --- |
-| `--instance <url>` | env `MASTODON_INSTANCE` | Target instance |
-| `--token <token>` | env `MASTODON_ACCESS_TOKEN` | Target token |
-| `--file <path>` | — | Tag list file |
-| `--source-instance <url>` | env `MASTODON_SOURCE_INSTANCE` | Instance to copy follows from |
-| `--source-token <token>` | env `MASTODON_SOURCE_TOKEN` | Token for the source instance |
-| `--trends <n>` | — | Follow top n trending tags |
-| `--delay-ms <ms>` | 1500 | Min delay between requests |
-| `--max <n>` | — | Only follow the first n new tags |
-| `--apply` | false | Actually POST follows |
-| `--state <path>` | `tmp/follow-hashtags.db` | SQLite state file |
-| `--retry-failed` | false | Retry tags previously marked error |
-| `--batch-size <n>` | 25 | Log a batch line every n tags |
-| `--help` | — | Show usage |
+| Flag                      | Default                        | Description                        |
+| ------------------------- | ------------------------------ | ---------------------------------- |
+| `--instance <url>`        | env `MASTODON_INSTANCE`        | Target instance                    |
+| `--token <token>`         | env `MASTODON_ACCESS_TOKEN`    | Target token                       |
+| `--file <path>`           | —                              | Tag list file                      |
+| `--source-instance <url>` | env `MASTODON_SOURCE_INSTANCE` | Instance to copy follows from      |
+| `--source-token <token>`  | env `MASTODON_SOURCE_TOKEN`    | Token for the source instance      |
+| `--trends <n>`            | —                              | Follow top n trending tags         |
+| `--delay-ms <ms>`         | 1500                           | Min delay between requests         |
+| `--max <n>`               | —                              | Only follow the first n new tags   |
+| `--apply`                 | false                          | Actually POST follows              |
+| `--state <path>`          | `tmp/follow-hashtags.db`       | SQLite state file                  |
+| `--retry-failed`          | false                          | Retry tags previously marked error |
+| `--batch-size <n>`        | 25                             | Log a batch line every n tags      |
+| `--help`                  | —                              | Show usage                         |
 
 ## Scopes
 

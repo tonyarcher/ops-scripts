@@ -1,4 +1,4 @@
-# Map a LAN hostname to its IP in the Windows hosts file so Chrome (and ping,
+﻿# Map a LAN hostname to its IP in the Windows hosts file so Chrome (and ping,
 # curl, SSH) resolve it without router DNS. Idempotent: existing mapping is
 # a no-op. Backs up hosts before writing. Needs Administrator (self-elevates).
 #

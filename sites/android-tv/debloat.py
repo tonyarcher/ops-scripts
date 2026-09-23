@@ -19,9 +19,9 @@ import json
 import os
 import shutil
 import subprocess
-import sys
 import time
 from pathlib import Path
+from typing import Any, cast
 
 HERE = Path(__file__).resolve().parent
 PACKAGES_PATH = HERE / "packages.json"
@@ -30,18 +30,18 @@ DEFAULT_HOST = os.environ.get("ANDROID_TV_HOST", "10.0.0.75")
 DEFAULT_PORT = int(os.environ.get("ANDROID_TV_PORT", "5555"))
 
 
-def load_catalog(path: Path = PACKAGES_PATH) -> dict:
+def load_catalog(path: Path = PACKAGES_PATH) -> dict[str, Any]:
     with path.open(encoding="utf-8") as fh:
-        return json.load(fh)
+        return cast("dict[str, Any]", json.load(fh))
 
 
-def protected_ids(catalog: dict) -> set[str]:
+def protected_ids(catalog: dict[str, Any]) -> set[str]:
     ids = {row["id"] for row in catalog["protected"]}
     ids.add(catalog["launcher"]["google"])
     return ids
 
 
-def is_protected(package: str, catalog: dict) -> bool:
+def is_protected(package: str, catalog: dict[str, Any]) -> bool:
     if package in protected_ids(catalog):
         return True
     lowered = package.lower()
@@ -51,8 +51,9 @@ def is_protected(package: str, catalog: dict) -> bool:
     return False
 
 
-def batch_by_id(catalog: dict, batch_id: str) -> dict:
-    for batch in catalog["batches"]:
+def batch_by_id(catalog: dict[str, Any], batch_id: str) -> dict[str, Any]:
+    batches: list[dict[str, Any]] = catalog["batches"]
+    for batch in batches:
         if batch["id"] == batch_id:
             return batch
     known = ", ".join(b["id"] for b in catalog["batches"])
@@ -128,17 +129,17 @@ def home_package(adb: str, serial: str) -> str:
 
 
 def apply_batch(
-    catalog: dict,
-    batch: dict,
+    catalog: dict[str, Any],
+    batch: dict[str, Any],
     *,
     allow_launcher: bool = False,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     if len(batch["packages"]) > MAX_BATCH:
         raise SystemExit(
             f"batch {batch['id']} has {len(batch['packages'])} packages; max is {MAX_BATCH}"
         )
     launcher = catalog["launcher"]["google"]
-    chosen: list[dict] = []
+    chosen: list[dict[str, Any]] = []
     for row in batch["packages"]:
         pkg = row["id"]
         if pkg == launcher and not allow_launcher:
@@ -152,7 +153,7 @@ def apply_batch(
     return chosen
 
 
-def cmd_list(catalog: dict) -> None:
+def cmd_list(catalog: dict[str, Any]) -> None:
     print(f"device: {catalog['device']['name']}")
     print("protected:")
     for row in catalog["protected"]:
@@ -182,8 +183,8 @@ def cmd_measure(adb: str, serial: str, out_dir: Path) -> None:
 def cmd_apply(
     adb: str,
     serial: str,
-    catalog: dict,
-    batch: dict,
+    catalog: dict[str, Any],
+    batch: dict[str, Any],
     *,
     yes: bool,
     allow_launcher: bool,
@@ -215,7 +216,7 @@ def cmd_apply(
 def cmd_undo(
     adb: str,
     serial: str,
-    batch: dict,
+    batch: dict[str, Any],
     *,
     yes: bool,
 ) -> None:
@@ -230,7 +231,7 @@ def cmd_undo(
         print("no changes. pass --yes to enable.")
 
 
-def cmd_undo_all(adb: str, serial: str, catalog: dict, *, yes: bool) -> None:
+def cmd_undo_all(adb: str, serial: str, catalog: dict[str, Any], *, yes: bool) -> None:
     print(f"{'UNDO-ALL' if yes else 'DRY-RUN'}")
     for batch in catalog["batches"]:
         for row in batch["packages"]:
@@ -248,10 +249,12 @@ def cmd_undo_all(adb: str, serial: str, catalog: dict, *, yes: bool) -> None:
 
 
 def cmd_disable_launcher(
-    adb: str, serial: str, catalog: dict, *, yes: bool, allow_launcher: bool
+    adb: str, serial: str, catalog: dict[str, Any], *, yes: bool, allow_launcher: bool
 ) -> None:
     if not allow_launcher:
-        raise SystemExit("refusing: pass --i-installed-flauncher after FLauncher is HOME.")
+        raise SystemExit(
+            "refusing: pass --i-installed-flauncher after FLauncher is HOME."
+        )
     replacement = catalog["launcher"]["replacement"]
     home = home_package(adb, serial)
     if home != replacement:
@@ -307,8 +310,12 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--batch", required=True)
     un = sub.add_parser("undo", help="re-enable one batch")
     un.add_argument("--batch", required=True)
-    sub.add_parser("undo-all", help="re-enable every catalog batch plus Google launcher")
-    sub.add_parser("disable-launcher", help="disable Google home after FLauncher is HOME")
+    sub.add_parser(
+        "undo-all", help="re-enable every catalog batch plus Google launcher"
+    )
+    sub.add_parser(
+        "disable-launcher", help="disable Google home after FLauncher is HOME"
+    )
     an = sub.add_parser("animations", help="set window/transition/animator scales")
     an.add_argument("--scale", default="0.5")
     return p

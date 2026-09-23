@@ -49,7 +49,7 @@ def _client(url: str, clock: FakeClock, **kwargs: object) -> object:
         min_delay_ms=0,
         now=clock.now,
         sleep=clock.sleep,
-        **kwargs,  # type: ignore[arg-type]
+        **kwargs,
     )
 
 
@@ -59,7 +59,7 @@ class ClientTests(unittest.TestCase):
 
         def _handler(req: object, _wfile: object, _url: object) -> None:
             seen["auth"] = req.headers.get("Authorization", "")  # type: ignore[attr-defined]
-            mock_mod.send_json(req, 200, {"name": "cats"})  # type: ignore[arg-type]
+            mock_mod.send_json(req, 200, {"name": "cats"})
 
         mock = mock_mod.start_mock_mastodon(_handler)
         try:
@@ -130,9 +130,9 @@ class ClientTests(unittest.TestCase):
         def _handler(req: object, _w: object, _u: object) -> None:
             calls["n"] += 1
             if calls["n"] == 1:
-                mock_mod.send_json(req, 500, {"error": "boom"})  # type: ignore[arg-type]
+                mock_mod.send_json(req, 500, {"error": "boom"})
             else:
-                mock_mod.send_json(req, 200, {"name": "cats"})  # type: ignore[arg-type]
+                mock_mod.send_json(req, 200, {"name": "cats"})
 
         mock = mock_mod.start_mock_mastodon(_handler)
         try:
@@ -152,9 +152,9 @@ class ClientTests(unittest.TestCase):
         def _handler(req: object, _w: object, _u: object) -> None:
             calls["n"] += 1
             if calls["n"] == 1:
-                mock_mod.send_json(req, 429, {"error": "x"}, {"Retry-After": "2"})  # type: ignore[arg-type]
+                mock_mod.send_json(req, 429, {"error": "x"}, {"Retry-After": "2"})
             else:
-                mock_mod.send_json(req, 200, {"name": "cats"})  # type: ignore[arg-type]
+                mock_mod.send_json(req, 200, {"name": "cats"})
 
         mock = mock_mod.start_mock_mastodon(_handler)
         try:
@@ -175,14 +175,14 @@ class ClientTests(unittest.TestCase):
         def _handler(req: object, _w: object, _u: object) -> None:
             calls["n"] += 1
             if calls["n"] == 1:
-                mock_mod.send_json(  # type: ignore[arg-type]
+                mock_mod.send_json(
                     req,
                     200,
                     {"name": "cats"},
                     {"X-RateLimit-Remaining": "0", "X-RateLimit-Reset": reset},
                 )
             else:
-                mock_mod.send_json(req, 200, {"name": "dogs"})  # type: ignore[arg-type]
+                mock_mod.send_json(req, 200, {"name": "dogs"})
 
         mock = mock_mod.start_mock_mastodon(_handler)
         try:
@@ -233,9 +233,9 @@ class ClientTests(unittest.TestCase):
         def _handler(req: object, _w: object, _u: object) -> None:
             calls["n"] += 1
             if calls["n"] <= 2:
-                mock_mod.send_json(req, 500, {"error": "boom"})  # type: ignore[arg-type]
+                mock_mod.send_json(req, 500, {"error": "boom"})
             else:
-                mock_mod.send_json(req, 200, {"name": "cats"})  # type: ignore[arg-type]
+                mock_mod.send_json(req, 200, {"name": "cats"})
 
         mock = mock_mod.start_mock_mastodon(_handler)
         try:
@@ -257,7 +257,7 @@ class ClientTests(unittest.TestCase):
             instance="https://example.social",
             token="t",
             min_delay_ms=0,
-            http_fn=_http,  # type: ignore[arg-type]
+            http_fn=_http,
             now=FakeClock().now,
             sleep=FakeClock().sleep,
         )
@@ -278,7 +278,7 @@ class ClientTests(unittest.TestCase):
             token="t",
             min_delay_ms=0,
             max_retries=0,
-            http_fn=_http,  # type: ignore[arg-type]
+            http_fn=_http,
             now=FakeClock().now,
             sleep=FakeClock().sleep,
         )

@@ -12,7 +12,7 @@ dotfiles/
 ├── install-agents.py   user-wide AGENTS.md → ~/.config/agents + OpenCode pointer (symlink, copy fallback)
 │                       + skills → ~/.config/opencode/skills (same way)
 ├── agents/AGENTS.md    canonical user-wide agent instructions
-├── agents/skills/      user-wide OpenCode skills (jev-gate: Jev diff gate)
+├── agents/skills/      user-wide OpenCode skills (jev-gate, jev-route, jev-triage)
 ├── bash/
 │   ├── .bashrc         the "hub" -- sources everything below (edit rarely)
 │   ├── .bash_env       ENVIRONMENT VARIABLES & PATH  (JAVA_HOME, ...)   <-- you will edit this
@@ -23,7 +23,7 @@ dotfiles/
 └── .gitattributes      keeps Unix line endings (safe on Windows)
 ```
 
-**The golden rule:** the files are separated by *purpose*. If you want a
+**The golden rule:** the files are separated by _purpose_. If you want a
 shortcut → `.bash_aliases`. A function → `.bash_functions`. An environment
 variable or PATH entry → `.bash_env`. You should almost never touch
 `.bashrc` itself.
@@ -67,7 +67,7 @@ Three rules that trip everyone up:
 
 1. Always use `export` or the variable dies when the shell exits.
 2. Never forget `:$PATH` on the right side, or you erase every existing entry.
-3. A tool's home directory is usually *not* its `bin`. The `bin` is what goes
+3. A tool's home directory is usually _not_ its `bin`. The `bin` is what goes
    on PATH.
 
 ### JAVA_HOME
@@ -110,17 +110,17 @@ you add to `~/.bash_env` is visible everywhere, every time.
 
 ## Aliases & functions cheatsheet
 
-| Group        | Examples |
-|--------------|----------|
-| listing      | `ll` `la` `l` `lt` `lr` `l1` — upgraded to `eza` if installed |
-| navigation   | `..` `...` `....` `back` `home` `cdl` `mkcd` `up [n]` |
-| search       | `rg` `gi` `gn` `hg` `findhere <name>` |
-| files        | `rm`(ask first) `cp` `mv` `backup <f>` `extract <archive>` |
-| git          | `g` `gs` `ga` `gc` `gpull` `gl` `gco` `gundo`(⚠ discards changes) |
-| docker       | `dc` `dps` `dlogs` `dsh <container>` |
-| system       | `update` `install` `search` `psg <name>` `mem` `disk` `ports` `myip` |
-| WSL only     | `explorer` `open` `notepad` `clip` `winpath` `lpath` `wslshutdown` |
-| misc         | `reload` `editbash` `serve` `sysinfo` `repeat <s> <cmd>` |
+| Group      | Examples                                                             |
+| ---------- | -------------------------------------------------------------------- |
+| listing    | `ll` `la` `l` `lt` `lr` `l1` — upgraded to `eza` if installed        |
+| navigation | `..` `...` `....` `back` `home` `cdl` `mkcd` `up [n]`                |
+| search     | `rg` `gi` `gn` `hg` `findhere <name>`                                |
+| files      | `rm`(ask first) `cp` `mv` `backup <f>` `extract <archive>`           |
+| git        | `g` `gs` `ga` `gc` `gpull` `gl` `gco` `gundo`(⚠ discards changes)    |
+| docker     | `dc` `dps` `dlogs` `dsh <container>`                                 |
+| system     | `update` `install` `search` `psg <name>` `mem` `disk` `ports` `myip` |
+| WSL only   | `explorer` `open` `notepad` `clip` `winpath` `lpath` `wslshutdown`   |
+| misc       | `reload` `editbash` `serve` `sysinfo` `repeat <s> <cmd>`             |
 
 ## WSL notes
 

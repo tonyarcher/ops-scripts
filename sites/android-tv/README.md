@@ -21,17 +21,17 @@ YouTube, sound, and the keyboard after every batch before the next.
 
 ## Never disable
 
-| Role | This stick |
-| --- | --- |
-| Inputs / Source / global keys | `com.sdt.globalkey` |
-| HDMI / SoC | `com.droidlogic`, `com.android.providers.tv` |
-| Remote | `com.google.android.tv.remote.service`, `com.mft.rcupair` |
-| Play Services / Store | `gms`, `gsf`, `vending` |
-| Location (boot loop) | `com.android.location.fused` |
-| Keyboard | `*.inputmethod.*` |
-| Home | `com.google.android.tvlauncher` until FLauncher is HOME |
-| Projector hardware | `com.sdt.projector.observer`, `com.sdt.frontpanelledsservice` |
-| YouTube / Chromecast / OTA | kept on this unit |
+| Role                          | This stick                                                    |
+| ----------------------------- | ------------------------------------------------------------- |
+| Inputs / Source / global keys | `com.sdt.globalkey`                                           |
+| HDMI / SoC                    | `com.droidlogic`, `com.android.providers.tv`                  |
+| Remote                        | `com.google.android.tv.remote.service`, `com.mft.rcupair`     |
+| Play Services / Store         | `gms`, `gsf`, `vending`                                       |
+| Location (boot loop)          | `com.android.location.fused`                                  |
+| Keyboard                      | `*.inputmethod.*`                                             |
+| Home                          | `com.google.android.tvlauncher` until FLauncher is HOME       |
+| Projector hardware            | `com.sdt.projector.observer`, `com.sdt.frontpanelledsservice` |
+| YouTube / Chromecast / OTA    | kept on this unit                                             |
 
 Skyworth extras (`smallclient`, `superservice`, `deviceinfo`, `ipcountry`) were
 left enabled on purpose.

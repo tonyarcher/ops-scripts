@@ -21,12 +21,12 @@ example (stderr notes that).
 
 ## Roles
 
-| Role | What |
-| --- | --- |
-| `vpn` | WireGuard + nginx gateway |
-| `gpu` | NVIDIA Linux, Docker Engine, CUDA (CAD batch / LLM) |
-| `llm` | Long-running inference host (often the same box as `gpu`) |
-| `cad` | Interactive CAD workstation. Host GPU. Not a container. |
+| Role  | What                                                                                        |
+| ----- | ------------------------------------------------------------------------------------------- |
+| `vpn` | WireGuard + nginx gateway                                                                   |
+| `gpu` | NVIDIA Linux, Docker Engine, CUDA (CAD batch / LLM)                                         |
+| `llm` | Long-running inference host (often the same box as `gpu`)                                   |
+| `cad` | Interactive CAD workstation. Host GPU. Not a container.                                     |
 | `lan` | Generic LAN workstation (e.g. ThinkPad over `thinkpad.lan`). SSH target, not a VPN gateway. |
 
 A Mac laptop is a **client** (`macos/`). It has no NVIDIA CUDA. Do not put one

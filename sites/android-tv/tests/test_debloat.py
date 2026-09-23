@@ -6,14 +6,17 @@ from __future__ import annotations
 import sys
 import unittest
 from pathlib import Path
+from typing import Any, ClassVar
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-import debloat  # noqa: E402
+import debloat
 
 
 class DebloatGuards(unittest.TestCase):
+    catalog: ClassVar[dict[str, Any]]
+
     @classmethod
     def setUpClass(cls) -> None:
         cls.catalog = debloat.load_catalog(ROOT / "packages.json")
@@ -36,7 +39,9 @@ class DebloatGuards(unittest.TestCase):
         )
 
     def test_fused_location_is_protected(self) -> None:
-        self.assertTrue(debloat.is_protected("com.android.location.fused", self.catalog))
+        self.assertTrue(
+            debloat.is_protected("com.android.location.fused", self.catalog)
+        )
 
     def test_youtube_is_protected(self) -> None:
         self.assertTrue(

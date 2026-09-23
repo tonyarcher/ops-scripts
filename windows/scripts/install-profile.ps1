@@ -1,4 +1,4 @@
-# Install the PowerShell profile. Mirrors `dotfiles/setup.sh` steps 1-2:
+﻿# Install the PowerShell profile. Mirrors `dotfiles/setup.sh` steps 1-2:
 #   1. Backs up any existing profile files to ~/.windows-profile-backup/<timestamp>/
 #   2. Copies (not symlinks) the hub + split files into the PowerShell 5.1
 #      AND PowerShell 7 profile directories, so both shells behave the same.

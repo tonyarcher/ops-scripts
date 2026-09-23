@@ -1,4 +1,4 @@
-# Restart ROG/Windows audio when the Cirrus speaker amp dies and a tinny
+﻿# Restart ROG/Windows audio when the Cirrus speaker amp dies and a tinny
 # motherboard device (Intel SST / HD Audio) takes over.
 #
 # Recycles Cirrus Logic Awesome Speaker Amps, the Realtek codec, related
@@ -42,22 +42,35 @@ function Write-Step([string]$Message) {
     Write-Host "==> $Message"
 }
 
-function Restart-NamedService([string]$Name) {
+function Restart-NamedService {
+    [CmdletBinding(SupportsShouldProcess)]
+    param([string]$Name)
+
     $svc = Get-Service -Name $Name -ErrorAction SilentlyContinue
     if (-not $svc) {
         Write-Host "    skip service $Name (not installed)"
+        return
+    }
+    if (-not $PSCmdlet.ShouldProcess($Name, 'Restart service')) {
         return
     }
     try {
         Restart-Service -Name $Name -Force -ErrorAction Stop
         $after = Get-Service -Name $Name
         Write-Host "    $($after.Name) -> $($after.Status)"
-    } catch {
+    }
+    catch {
         Write-Host "    FAIL $Name : $($_.Exception.Message)"
     }
 }
 
-function Restart-NamedDevice([string]$InstanceId, [string]$FriendlyName) {
+function Restart-NamedDevice {
+    [CmdletBinding(SupportsShouldProcess)]
+    param([string]$InstanceId, [string]$FriendlyName)
+
+    if (-not $PSCmdlet.ShouldProcess($FriendlyName, 'Recycle PnP device')) {
+        return
+    }
     Write-Host "    recycle $FriendlyName"
     try {
         Disable-PnpDevice -InstanceId $InstanceId -Confirm:$false -ErrorAction Stop
@@ -66,7 +79,8 @@ function Restart-NamedDevice([string]$InstanceId, [string]$FriendlyName) {
         Start-Sleep -Seconds 2
         $after = Get-PnpDevice -InstanceId $InstanceId -ErrorAction Stop
         Write-Host "    $($after.Status)  $FriendlyName"
-    } catch {
+    }
+    catch {
         Write-Host "    FAIL $FriendlyName : $($_.Exception.Message)"
     }
 }
@@ -74,11 +88,12 @@ function Restart-NamedDevice([string]$InstanceId, [string]$FriendlyName) {
 Write-Step "PnP devices (Cirrus amp + Realtek codec)"
 $deviceFilter = "Cirrus Logic Awesome Speaker Amps|Realtek High Definition Audio|^Realtek\(R\) Audio$"
 $devices = @(Get-PnpDevice -ErrorAction SilentlyContinue | Where-Object {
-    $_.FriendlyName -match $deviceFilter -and $_.Class -match "MEDIA|System"
-})
+        $_.FriendlyName -match $deviceFilter -and $_.Class -match "MEDIA|System"
+    })
 if ($devices.Count -eq 0) {
     Write-Host "    no Cirrus/Realtek MEDIA devices found"
-} else {
+}
+else {
     foreach ($d in $devices) {
         Restart-NamedDevice -InstanceId $d.InstanceId -FriendlyName $d.FriendlyName
     }

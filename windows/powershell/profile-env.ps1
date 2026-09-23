@@ -1,4 +1,4 @@
-# =============================================================================
+﻿# =============================================================================
 #  profile-env.ps1  --  THE file for environment variables and PATH
 #
 #  Dot-sourced by Microsoft.PowerShell_profile.ps1 (the hub). This is the

@@ -1,4 +1,4 @@
-# =============================================================================
+﻿# =============================================================================
 #  profile-functions.ps1  --  reusable shell functions
 #
 #  Dot-sourced by Microsoft.PowerShell_profile.ps1 (the hub). Add your own

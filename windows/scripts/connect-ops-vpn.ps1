@@ -1,4 +1,4 @@
-# connect-ops-vpn.ps1 — import or start a WireGuard client profile on Windows.
+﻿# connect-ops-vpn.ps1 — import or start a WireGuard client profile on Windows.
 #
 # What: copies a .conf from the VPN server into WireGuard and optionally
 #       installs the tunnel service. Does not download WireGuard.

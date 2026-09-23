@@ -1,4 +1,4 @@
-# Set PowerShell's default opening directory to the user home folder.
+﻿# Set PowerShell's default opening directory to the user home folder.
 # Patches Start Menu / Desktop / taskbar shortcuts (powershell.exe / pwsh.exe)
 # and Windows Terminal PowerShell profiles. Does not touch cmd, WSL, or ISE.
 #
@@ -24,7 +24,7 @@ $HomeDir = $env:USERPROFILE
 if (-not $HomeDir) { throw 'USERPROFILE is not set' }
 $WtStartDir = '%USERPROFILE%'
 
-function Get-PowerShellShortcutPaths {
+function Get-PowerShellShortcutPath {
     $roots = @(
         (Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu'),
         (Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu'),
@@ -98,12 +98,18 @@ function Get-JsonObjectSpan {
 }
 
 function Set-JsonStringProperty {
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [string]$Json,
         [string]$Guid,
         [string]$Name,
         [string]$Value
     )
+
+    # Pure string transform. Under -WhatIf it returns the input unchanged.
+    if (-not $PSCmdlet.ShouldProcess('JSON string', "Set $Name")) {
+        return $Json
+    }
     $span = Get-JsonObjectSpan -Text $Json -Guid $Guid
     if (-not $span) {
         Write-Warning "Windows Terminal: could not locate profile object for $Guid"
@@ -116,7 +122,8 @@ function Set-JsonStringProperty {
         $current = $propRe.Match($block).Value
         if ($current -eq $desired) { return $Json }
         $newBlock = $propRe.Replace($block, $desired, 1)
-    } else {
+    }
+    else {
         $inner = $block.Substring(0, $block.Length - 1).TrimEnd()
         if ($inner.Length -eq 0) {
             Write-Warning "Windows Terminal: empty profile object for $Guid"
@@ -136,7 +143,7 @@ function Set-JsonStringProperty {
     return $Json.Remove($span.Start, $span.Length).Insert($span.Start, $newBlock)
 }
 
-function Get-WtPowerShellGuids {
+function Get-WtPowerShellGuid {
     param([string]$Raw)
     $guids = New-Object System.Collections.Generic.List[string]
     try {
@@ -147,12 +154,13 @@ function Get-WtPowerShellGuids {
             if ($p.PSObject.Properties['commandline']) { $cmd = [string]$p.commandline }
             if ($p.PSObject.Properties['source']) { $src = [string]$p.source }
             $isPs = ($cmd -match '(?i)[\\/](powershell|pwsh)\.exe') -or
-                    ($src -eq 'Windows.Terminal.PowershellCore')
+            ($src -eq 'Windows.Terminal.PowershellCore')
             if ($isPs -and $p.PSObject.Properties['guid']) {
                 $guids.Add([string]$p.guid)
             }
         }
-    } catch {
+    }
+    catch {
         foreach ($g in @(
                 '{61c54bbd-c2c6-5271-96e7-009a87ff44bf}',
                 '{574e775e-4f2a-5b96-ac1e-a2962a402336}'
@@ -166,7 +174,7 @@ function Get-WtPowerShellGuids {
 # --- 1. Shortcuts (Start in = user home) ---------------------------------------
 $sh = New-Object -ComObject WScript.Shell
 $shortcutCount = 0
-foreach ($lnkFile in Get-PowerShellShortcutPaths) {
+foreach ($lnkFile in Get-PowerShellShortcutPath) {
     $lnk = $sh.CreateShortcut($lnkFile.FullName)
     $target = [string]$lnk.TargetPath
     if ($target -notmatch '(?i)[\\/](powershell|pwsh)\.exe$') { continue }
@@ -177,7 +185,8 @@ foreach ($lnkFile in Get-PowerShellShortcutPaths) {
             $lnk.Save()
             Write-Host "    shortcut $($lnkFile.Name) -> $HomeDir"
             $shortcutCount += 1
-        } catch {
+        }
+        catch {
             Write-Host "    skip $($lnkFile.FullName): $($_.Exception.Message)"
         }
     }
@@ -193,7 +202,7 @@ $wtCount = 0
 foreach ($wtPath in $wtPaths) {
     if (-not (Test-Path $wtPath)) { continue }
     $raw = [System.IO.File]::ReadAllText($wtPath)
-    $guids = @(Get-WtPowerShellGuids -Raw $raw)
+    $guids = @(Get-WtPowerShellGuid -Raw $raw)
     $new = $raw
     foreach ($guid in $guids) {
         $new = Set-JsonStringProperty -Json $new -Guid $guid -Name 'startingDirectory' -Value $WtStartDir

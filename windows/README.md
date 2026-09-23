@@ -35,4 +35,3 @@ and Windows Terminal PowerShell profiles to open in `%USERPROFILE%`. Supports
 `add-lan-host.ps1` maps `thinkpad.lan` to `10.0.0.63` in the Windows hosts file
 (idempotent, backs up hosts, self-elevates). Supports `-WhatIf`. Restart Chrome
 afterward (it caches DNS), then open `https://thinkpad.lan/`.
-

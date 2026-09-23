@@ -1,4 +1,4 @@
-# deploy-ops-vpn.ps1 — Windows entry for sites/vpn/deploy.py
+﻿# deploy-ops-vpn.ps1 — Windows entry for sites/vpn/deploy.py
 #
 # What: finds Python and runs the VPN compose driver (SSH tunnel + compose).
 # Run:  powershell -NoProfile -ExecutionPolicy Bypass -File windows/scripts/deploy-ops-vpn.ps1 --remote up

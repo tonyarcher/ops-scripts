@@ -1,4 +1,4 @@
-# deploy-opencode-docker.ps1 — build + run the opencode Docker image (Windows)
+﻿# deploy-opencode-docker.ps1 — build + run the opencode Docker image (Windows)
 #
 # What: wraps `docker compose` with env checks and friendly errors.
 # Run:  powershell -NoProfile -ExecutionPolicy Bypass -File windows/scripts/deploy-opencode-docker.ps1
@@ -52,7 +52,8 @@ if (-not (Test-Path $EnvFile)) {
         Copy-Item $EnvExample $EnvFile
         Write-Host "Created $EnvFile from .env.example — edit provider keys before running." -ForegroundColor Yellow
         Write-Host "  notepad $EnvFile"
-    } else {
+    }
+    else {
         Write-Error "No $EnvFile and no .env.example found — cannot start."
         exit 1
     }
@@ -73,7 +74,8 @@ if ($WithJava) {
 function Invoke-Compose([string[]]$ComposeArgs) {
     if (Test-Path $EnvFile) {
         $all = @("compose", "-f", $ComposeFile, "--env-file", $EnvFile) + $ComposeArgs
-    } else {
+    }
+    else {
         $all = @("compose", "-f", $ComposeFile) + $ComposeArgs
     }
     Write-Host "==> docker $($all -join ' ')" -ForegroundColor DarkGray
@@ -89,26 +91,26 @@ function Invoke-ComposeWithExtra([string[]]$BaseArgs) {
 }
 
 switch ($Command) {
-    "build"   { Invoke-ComposeWithExtra @("build") }
-    "up"      {
+    "build" { Invoke-ComposeWithExtra @("build") }
+    "up" {
         Invoke-ComposeWithExtra @("up", "--build", "-d")
         Write-Host "==> ok. Try:" -ForegroundColor Green
         Write-Host "    docker compose -f $ComposeFile exec opencode bash"
         Write-Host "    docker compose -f $ComposeFile logs -f"
         Invoke-Compose @("ps")
     }
-    "down"    { Invoke-ComposeWithExtra @("down") }
+    "down" { Invoke-ComposeWithExtra @("down") }
     "restart" { Invoke-ComposeWithExtra @("restart") }
-    "logs"    {
+    "logs" {
         if (-not $ExtraArgs -or $ExtraArgs.Count -eq 0) { $ExtraArgs = @("-f") }
         Invoke-Compose (@("logs") + $ExtraArgs)
     }
-    "shell"   { Invoke-ComposeWithExtra @("exec", "opencode", "bash") }
-    "clean"   {
+    "shell" { Invoke-ComposeWithExtra @("exec", "opencode", "bash") }
+    "clean" {
         Write-Host "==> stopping and removing image + volume..." -ForegroundColor Yellow
-        try { Invoke-Compose @("down", "-v", "--rmi", "local") } catch {}
-        try { docker volume rm ops-opencode-data 2>$null | Out-Null } catch {}
+        try { Invoke-Compose @("down", "-v", "--rmi", "local") } catch { Write-Verbose "down failed: $($_.Exception.Message)" }
+        try { docker volume rm ops-opencode-data 2>$null | Out-Null } catch { Write-Verbose "volume rm failed: $($_.Exception.Message)" }
     }
-    "config"  { Invoke-ComposeWithExtra @("config") }
-    "ps"      { Invoke-ComposeWithExtra @("ps") }
+    "config" { Invoke-ComposeWithExtra @("config") }
+    "ps" { Invoke-ComposeWithExtra @("ps") }
 }

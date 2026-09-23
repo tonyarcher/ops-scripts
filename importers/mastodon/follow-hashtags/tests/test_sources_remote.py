@@ -33,18 +33,19 @@ class FollowedTags(unittest.TestCase):
         holder: dict[str, str] = {}
 
         def _handler(req: object, _w: object, url: object) -> None:
-            query_str = url.query if hasattr(url, "query") else ""  # type: ignore[union-attr]
-            query = dict(
-                q.split("=", 1) if "=" in q else (q, "")
-                for q in query_str.split("&")
-                if q
-            )
-            path = url.path if hasattr(url, "path") else ""  # type: ignore[union-attr]
+            query_str = url.query if hasattr(url, "query") else ""
+            query: dict[str, str] = {}
+            for pair in query_str.split("&"):
+                if not pair:
+                    continue
+                key, _, value = pair.partition("=")
+                query[key] = value
+            path = url.path if hasattr(url, "path") else ""
             if path == "/api/v1/followed_tags":
                 if query.get("max_id") == "2":
-                    mock_mod.send_json(req, 200, [{"name": "bird"}])  # type: ignore[arg-type]
+                    mock_mod.send_json(req, 200, [{"name": "bird"}])
                 else:
-                    mock_mod.send_json(  # type: ignore[arg-type]
+                    mock_mod.send_json(
                         req,
                         200,
                         [{"name": "Cats"}, {"name": "dogs"}],
@@ -53,7 +54,7 @@ class FollowedTags(unittest.TestCase):
                         },
                     )
             else:
-                mock_mod.send_json(req, 404, {"error": "not found"})  # type: ignore[arg-type]
+                mock_mod.send_json(req, 404, {"error": "not found"})
 
         mock = mock_mod.start_mock_mastodon(_handler)
         holder["url"] = mock.url
@@ -68,7 +69,7 @@ class FollowedTags(unittest.TestCase):
         mock = mock_mod.start_mock_mastodon(
             lambda req, _w, url: (
                 mock_mod.send_json(req, 200, [{"name": "cats"}])
-                if urlparse(url.path).path == "/api/v1/followed_tags"  # type: ignore[union-attr]
+                if urlparse(url.path).path == "/api/v1/followed_tags"
                 else mock_mod.send_json(req, 404, {"error": "x"})
             )
         )
@@ -113,9 +114,9 @@ class TrendingTags(unittest.TestCase):
             parsed = up(full)
             if parsed.path == "/api/v1/trends/tags":
                 tags = [{"name": f"tag{offset + i}"} for i in range(20)]
-                mock_mod.send_json(req, 200, tags)  # type: ignore[arg-type]
+                mock_mod.send_json(req, 200, tags)
             else:
-                mock_mod.send_json(req, 404, {"error": "not found"})  # type: ignore[arg-type]
+                mock_mod.send_json(req, 404, {"error": "not found"})
 
         mock = mock_mod.start_mock_mastodon(_handler)
         try:
@@ -134,11 +135,11 @@ class TrendingTags(unittest.TestCase):
             if parsed.path == "/api/v1/trends/tags":
                 offset = int(parse_qs(parsed.query).get("offset", ["0"])[0])
                 if offset == 0:
-                    mock_mod.send_json(req, 200, [{"name": "only"}])  # type: ignore[arg-type]
+                    mock_mod.send_json(req, 200, [{"name": "only"}])
                 else:
-                    mock_mod.send_json(req, 200, [])  # type: ignore[arg-type]
+                    mock_mod.send_json(req, 200, [])
             else:
-                mock_mod.send_json(req, 404, {"error": "not found"})  # type: ignore[arg-type]
+                mock_mod.send_json(req, 404, {"error": "not found"})
 
         mock = mock_mod.start_mock_mastodon(_handler)
         try:

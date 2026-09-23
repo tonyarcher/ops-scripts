@@ -1,4 +1,4 @@
-# =============================================================================
+﻿# =============================================================================
 #  profile-aliases.ps1  --  command shortcuts
 #
 #  Dot-sourced by Microsoft.PowerShell_profile.ps1 (the hub). One shortcut

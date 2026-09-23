@@ -11,11 +11,12 @@ import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 _spec = importlib.util.spec_from_file_location("ops_hosts", ROOT / "inventory.py")
 assert _spec is not None and _spec.loader is not None
-inv = importlib.util.module_from_spec(_spec)
+inv: Any = importlib.util.module_from_spec(_spec)
 sys.modules["ops_hosts"] = inv
 _spec.loader.exec_module(inv)
 

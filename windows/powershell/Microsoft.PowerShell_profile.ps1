@@ -1,4 +1,4 @@
-# =============================================================================
+﻿# =============================================================================
 #  Microsoft.PowerShell_profile.ps1  --  interactive PowerShell config (the "hub")
 #
 #  Installed by windows/scripts/install-profile.ps1 into the PowerShell 5.1
