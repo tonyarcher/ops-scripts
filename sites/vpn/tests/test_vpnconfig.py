@@ -11,6 +11,10 @@ import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from vpnconfig import Settings
 
 ROOT = Path(__file__).resolve().parents[1]
 _spec = importlib.util.spec_from_file_location("vpnconfig", ROOT / "vpnconfig.py")
@@ -24,7 +28,7 @@ FAKE_PUB = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="
 FAKE_PSK = "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC="
 
 
-def settings(**overrides: object) -> vpnconfig.Settings:
+def settings(**overrides: object) -> Settings:
     base: dict[str, object] = {
         "server_cidr": "10.13.13.1/24",
         "listen_port": 51820,
@@ -44,7 +48,8 @@ def settings(**overrides: object) -> vpnconfig.Settings:
         "mfa_ttl_hours": 12,
     }
     base.update(overrides)
-    return vpnconfig.Settings(**base)  # type: ignore[arg-type]
+    made: Settings = vpnconfig.Settings(**base)
+    return made
 
 
 class PeerNames(unittest.TestCase):

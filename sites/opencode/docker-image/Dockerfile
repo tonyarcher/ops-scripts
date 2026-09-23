@@ -51,7 +51,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && locale-gen en_US.UTF-8
 
 # --- 2. Node toolchain (nodesource) ---
-RUN curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" | bash - \
+# Versions float on purpose: this dev image tracks current toolchains and the
+# base image tag pins the suite. Rebuild to move forward.
+# hadolint ignore=DL3016
+RUN curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION}.x" -o /tmp/nodesource.sh \
+    && bash /tmp/nodesource.sh \
+    && rm -f /tmp/nodesource.sh \
     && apt-get update && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/* \
     && node --version && npm --version \
@@ -77,8 +82,10 @@ RUN if [ "$WITH_BUN" = "true" ]; then \
 
 # --- 3. opencode ---
 # Install globally so `opencode` is on PATH for any user.
-# Pin via package.json if you need reproducible builds; otherwise `latest`.
+# Version floats on purpose: this dev image tracks the current CLI and the base
+# image tag pins the suite. Pin here if you need reproducible builds.
 # Fail loud — do not mask npm errors with || echo fallback.
+# hadolint ignore=DL3016
 RUN npm install -g @opencode-ai/cli
 RUN opencode --version 2>/dev/null || opencode2 --version 2>/dev/null
 
@@ -94,19 +101,27 @@ RUN if [ "$WITH_JAVA" = "true" ]; then \
 # --- 5. Non-root dev user (agents + file perms) ---
 # Ubuntu 24.04 ships a default `ubuntu` user with uid/gid 1000, so naive
 # groupadd/useradd -u 1000 fails. Remove any existing occupant first.
+# The dev user's login name and numeric ids are build inputs, not secrets.
+# hadolint ignore=DL3064
 ARG USERNAME=dev
+# hadolint ignore=DL3064
 ARG UID=1000
+# hadolint ignore=DL3064
 ARG GID=1000
+# No `getent | cut` pipe here: dash has no pipefail, so a failed getent would
+# silently yield an empty name. Parameter expansion cannot mask a failure.
 RUN if getent passwd ${UID} >/dev/null; then \
-        existing_user=$(getent passwd ${UID} | cut -d: -f1); \
+        passwd_entry=$(getent passwd ${UID}); \
+        existing_user=${passwd_entry%%:*}; \
         userdel -r "$existing_user" 2>/dev/null || userdel "$existing_user" 2>/dev/null || true; \
     fi \
     && if getent group ${GID} >/dev/null; then \
-        existing_grp=$(getent group ${GID} | cut -d: -f1); \
+        group_entry=$(getent group ${GID}); \
+        existing_grp=${group_entry%%:*}; \
         groupdel "$existing_grp" 2>/dev/null || true; \
     fi \
     && groupadd -g ${GID} ${USERNAME} \
-    && useradd -m -u ${UID} -g ${GID} -s /bin/bash ${USERNAME} \
+    && useradd -l -m -u ${UID} -g ${GID} -s /bin/bash ${USERNAME} \
     && mkdir -p /etc/sudoers.d \
     && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USERNAME} \
     && chmod 0440 /etc/sudoers.d/${USERNAME} \

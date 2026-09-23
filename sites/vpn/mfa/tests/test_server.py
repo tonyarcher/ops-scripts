@@ -56,7 +56,7 @@ def _config(tmp: str) -> object:
 class TotpFlow(unittest.TestCase):
     def test_totp_unlocks(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
-            app = server.MFAApp(_config(raw))  # type: ignore[arg-type]
+            app = server.MFAApp(_config(raw))
             code = totp_mod.totp_at(
                 totp_mod.decode_base32("JBSWY3DPEHPK3PXP"), time.time() * 1000
             )
@@ -67,21 +67,21 @@ class TotpFlow(unittest.TestCase):
 
     def test_bad_code(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
-            app = server.MFAApp(_config(raw))  # type: ignore[arg-type]
+            app = server.MFAApp(_config(raw))
             status, _ = app.check_totp("10.0.0.2", "000000")
             self.assertEqual(status, 401)
             self.assertFalse(app.is_open("10.0.0.2"))
 
     def test_unknown_ip(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
-            app = server.MFAApp(_config(raw))  # type: ignore[arg-type]
+            app = server.MFAApp(_config(raw))
             status, payload = app.check_totp("9.9.9.9", "123456")
             self.assertEqual(status, 403)
             self.assertIn("error", payload)
 
     def test_rate_limited(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
-            app = server.MFAApp(_config(raw))  # type: ignore[arg-type]
+            app = server.MFAApp(_config(raw))
             for _ in range(9):
                 app.check_totp("10.0.0.2", "000000")
             status, payload = app.check_totp("10.0.0.2", "000000")
@@ -92,13 +92,13 @@ class TotpFlow(unittest.TestCase):
 class RegistrationGating(unittest.TestCase):
     def test_requires_totp(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
-            app = server.MFAApp(_config(raw))  # type: ignore[arg-type]
+            app = server.MFAApp(_config(raw))
             status, _ = app.registration_options("10.0.0.2")
             self.assertEqual(status, 401)
 
     def test_options_after_unlock(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
-            app = server.MFAApp(_config(raw))  # type: ignore[arg-type]
+            app = server.MFAApp(_config(raw))
             code = totp_mod.totp_at(
                 totp_mod.decode_base32("JBSWY3DPEHPK3PXP"), time.time() * 1000
             )
@@ -109,7 +109,7 @@ class RegistrationGating(unittest.TestCase):
 
     def test_register_expired_without_challenge(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
-            app = server.MFAApp(_config(raw))  # type: ignore[arg-type]
+            app = server.MFAApp(_config(raw))
             code = totp_mod.totp_at(
                 totp_mod.decode_base32("JBSWY3DPEHPK3PXP"), time.time() * 1000
             )
@@ -121,7 +121,7 @@ class RegistrationGating(unittest.TestCase):
 class LoginGating(unittest.TestCase):
     def test_no_keys_registered(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
-            app = server.MFAApp(_config(raw))  # type: ignore[arg-type]
+            app = server.MFAApp(_config(raw))
             status, payload = app.login_options("10.0.0.2")
             self.assertEqual(status, 400)
             self.assertIn("error", payload)
@@ -129,7 +129,7 @@ class LoginGating(unittest.TestCase):
     def test_login_options_with_key(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             cfg = _config(raw)
-            app = server.MFAApp(cfg)  # type: ignore[arg-type]
+            app = server.MFAApp(cfg)
             store.save_passkeys(
                 cfg.keys_dir,  # type: ignore[attr-defined]
                 "laptop",
@@ -141,7 +141,7 @@ class LoginGating(unittest.TestCase):
 
     def test_whoami(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
-            app = server.MFAApp(_config(raw))  # type: ignore[arg-type]
+            app = server.MFAApp(_config(raw))
             info = app.whoami("10.0.0.2")
             self.assertEqual(info["peer"], "laptop")
             self.assertFalse(info["open"])
@@ -172,7 +172,7 @@ class VerifyRegistration(unittest.TestCase):
 
         fake.verify_registration_response = _verify  # type: ignore[attr-defined]
         with tempfile.TemporaryDirectory() as raw:
-            app = server.MFAApp(_config(raw))  # type: ignore[arg-type]
+            app = server.MFAApp(_config(raw))
             code = totp_mod.totp_at(
                 totp_mod.decode_base32("JBSWY3DPEHPK3PXP"), time.time() * 1000
             )
@@ -198,7 +198,7 @@ class VerifyRegistration(unittest.TestCase):
 
     def test_register_maps_verification_error_to_401(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
-            app = server.MFAApp(_config(raw))  # type: ignore[arg-type]
+            app = server.MFAApp(_config(raw))
             code = totp_mod.totp_at(
                 totp_mod.decode_base32("JBSWY3DPEHPK3PXP"), time.time() * 1000
             )
@@ -216,7 +216,7 @@ class VerifyLogin(unittest.TestCase):
     def test_login_maps_verification_error_to_401(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             cfg = _config(raw)
-            app = server.MFAApp(cfg)  # type: ignore[arg-type]
+            app = server.MFAApp(cfg)
             store.save_passkeys(
                 cfg.keys_dir,  # type: ignore[attr-defined]
                 "laptop",
@@ -234,7 +234,7 @@ class VerifyLogin(unittest.TestCase):
     def test_successful_login_clears_challenge_without_keyerror(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             cfg = _config(raw)
-            app = server.MFAApp(cfg)  # type: ignore[arg-type]
+            app = server.MFAApp(cfg)
             store.save_passkeys(
                 cfg.keys_dir,  # type: ignore[attr-defined]
                 "laptop",

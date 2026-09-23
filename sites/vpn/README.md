@@ -82,13 +82,13 @@ Profiles are generated on first `up` and live in the `ops-vpn-config` volume
 python sites/vpn/deploy.py peer laptop > laptop.conf
 ```
 
-| OS | Client | How |
-| --- | --- | --- |
-| Windows | [WireGuard for Windows](https://www.wireguard.com/install/) | Import tunnel from file, or `windows/scripts/connect-ops-vpn.ps1 -Config laptop.conf` |
-| Linux | `wireguard-tools` | `bash sites/vpn/clients/connect.sh laptop.conf` |
-| macOS | WireGuard app or `brew install wireguard-tools` | Import in the app, or `connect.sh` if `wg-quick` is on PATH |
-| iPad | [WireGuard for iOS](https://apps.apple.com/app/wireguard/id1441195209) | QR (`show-qr.py`) or Create from file |
-| Android | [WireGuard for Android](https://play.google.com/store/apps/details?id=com.wireguard.android) | QR (`show-qr.py`) or Create from file |
+| OS      | Client                                                                                       | How                                                                                   |
+| ------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Windows | [WireGuard for Windows](https://www.wireguard.com/install/)                                  | Import tunnel from file, or `windows/scripts/connect-ops-vpn.ps1 -Config laptop.conf` |
+| Linux   | `wireguard-tools`                                                                            | `bash sites/vpn/clients/connect.sh laptop.conf`                                       |
+| macOS   | WireGuard app or `brew install wireguard-tools`                                              | Import in the app, or `connect.sh` if `wg-quick` is on PATH                           |
+| iPad    | [WireGuard for iOS](https://apps.apple.com/app/wireguard/id1441195209)                       | QR (`show-qr.py`) or Create from file                                                 |
+| Android | [WireGuard for Android](https://play.google.com/store/apps/details?id=com.wireguard.android) | QR (`show-qr.py`) or Create from file                                                 |
 
 Append peer names; do not reorder. Order assigns `10.13.13.2`, `.3`, …:
 

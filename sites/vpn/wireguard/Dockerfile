@@ -23,9 +23,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wireguard-tools \
     && rm -rf /var/lib/apt/lists/*
 
-COPY vpnconfig.py /opt/vpn/vpnconfig.py
+# vpnconfig.py is the CLI façade; its vpnconfig_*.py modules travel with it.
+COPY vpnconfig*.py /opt/vpn/
 COPY wireguard/entrypoint.sh /entrypoint.sh
-RUN chmod 0755 /entrypoint.sh && chmod 0644 /opt/vpn/vpnconfig.py
+RUN chmod 0755 /entrypoint.sh && chmod 0644 /opt/vpn/vpnconfig*.py
 
 VOLUME /config
 EXPOSE 51820/udp

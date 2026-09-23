@@ -65,16 +65,16 @@ docker compose -f sites/opencode/docker-image/docker-compose.yml logs -f
 1. Copy the template: `cp .env.example .env`
 2. Fill only what you need:
 
-| Var | Why |
-|-----|-----|
-| `XAI_API_KEY` | `xai/grok-4.6#max` (your `plan` agent) |
+| Var                                         | Why                                                                                           |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `XAI_API_KEY`                               | `xai/grok-4.6#max` (your `plan` agent)                                                        |
 | `OPENCODE_GO_API_KEY` or `OPENCODE_API_KEY` | `opencode-go/muse-spark` / `opencode-go/glm-5.3-flash` — check `opencode auth` for exact name |
-| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | any model routed through those providers |
-| `GITHUB_TOKEN` | `gh` CLI inside container |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`      | any model routed through those providers                                                      |
+| `GITHUB_TOKEN`                              | `gh` CLI inside container                                                                     |
 
 Leave unused vars blank. `docker-compose.yml` uses `env_file: .env` so every key in `.env` becomes an env var in the container. You can also `export XAI_API_KEY=...` before `deploy.sh` — it will be picked up.
 
-To confirm which secret *names* the container has (values stay hidden):
+To confirm which secret _names_ the container has (values stay hidden):
 
 ```bash
 docker compose -f sites/opencode/docker-image/docker-compose.yml exec opencode env | cut -d= -f1 | grep -E 'API_KEY|TOKEN|GITHUB' | sort
@@ -146,9 +146,9 @@ By default the image has no baked `opencode.json` — you mount the repo (`../..
 1. Copy `sites/opencode/config-generator/opencode.json.example` next to the `Dockerfile` as `opencode.json`.
 2. Uncomment in `Dockerfile`:
 
-   ```dockerfile
-   COPY --chown=dev:dev opencode.json /home/dev/.config/opencode/opencode.json
-   ```
+    ```dockerfile
+    COPY --chown=dev:dev opencode.json /home/dev/.config/opencode/opencode.json
+    ```
 
 ### Change mounted workspace
 
@@ -156,7 +156,7 @@ By default the image has no baked `opencode.json` — you mount the repo (`../..
 
 ```yaml
 volumes:
-  - /absolute/path/to/my-app:/workspace:cached
+    - /absolute/path/to/my-app:/workspace:cached
 ```
 
 Or override at runtime:
@@ -198,7 +198,7 @@ docker compose -f sites/opencode/docker-image/docker-compose.yml run --rm openco
 
 ## Troubleshooting
 
-* `no API keys set` — you copied `.env.example` but didn't fill keys. Edit `.env`.
-* `permission denied` on `deploy.sh` — `chmod +x sites/opencode/docker-image/deploy.sh`.
-* `port already allocated` — change `PORT_*` in `.env` or stop the host process.
-* `cannot connect to docker daemon` — start Docker Desktop / `sudo systemctl start docker`.
+- `no API keys set` — you copied `.env.example` but didn't fill keys. Edit `.env`.
+- `permission denied` on `deploy.sh` — `chmod +x sites/opencode/docker-image/deploy.sh`.
+- `port already allocated` — change `PORT_*` in `.env` or stop the host process.
+- `cannot connect to docker daemon` — start Docker Desktop / `sudo systemctl start docker`.
