@@ -11,29 +11,13 @@ decision-only model. It returns typed answers, never prose. The agent
 owns context collection. Jev only judges the bundle it receives. Never
 use Jev to write code, prose, or plans. Never use it for deep reasoning.
 
-## Enable Jev
+## Setup
 
-Neither Zen chat path is verified working. `opencode/jev-1.13-free`
-500s on chat-style calls (opencode logs, 3 title sessions, 2026-09-19);
-`opencode/jev-1.13` and `jev-latest` are untested there — catalog marks
-Jev `tool_call: false`. Do not set any Jev id as `small_model` or an
-agent model without a passing smoke test first.
+Setup is not restated here. It lives in the user-wide `AGENTS.md` under
+**Jev → Set up Jev**. Confirm the server is live with `jev_models`; a working
+key lists model ids.
 
-Working path: typed tools (`jev_ask`, `jev_models` through `jev-mcp`,
-`enabled: false` in the seed) with a TypeSafe key:
-
-1. Get a key from `https://console.typesafe.ai/settings/keys`.
-2. Provide it without committing it. Preferred order:
-    - `~/.config/typesafe/key` file, mode `600`. Most reliable.
-    - Exported `TYPESAFE_API_KEY` in the process that launches OpenCode.
-3. Flip `enabled` to `true` in the OpenCode config. Reload the session.
-4. Run `jev_models`. A working key lists model ids.
-
-Do not add an `environment` block with an empty key. An empty string
-shadows the key-file fallback and turns a working setup into a
-missing-key error.
-
-If neither path is live, skip Jev and proceed to the `review` subagent
+If the server is not live, skip Jev and proceed to the `review` subagent
 without it. Say that Jev was skipped. Never block on Jev.
 
 ## Build the context bundle

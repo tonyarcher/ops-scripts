@@ -38,7 +38,75 @@ Keep STE habits: short sentences, one idea, same word, imperative procedures, no
   calling the work done.
 - Run the `jev-gate` skill (`jev_ask` on the full uncommitted diff) before
   the work is done. `act` proceeds; `review` means fix and re-ask; `abstain`
-  escalates. Skip only when `jev-mcp` has no key — say so.
+  escalates. Skip when `jev-mcp` has no key, or when the diff is only docs,
+  comments, or formatting. Say that you skipped it and name the reason.
+
+## Model cost
+
+- Titles, summaries, and other internal calls run on `small_model`. Keep
+  `small_model` cheap. Do not let it default to an expensive agent model.
+- Reasoning effort multiplies output tokens, and output is the expensive half.
+  Give `explore` and mechanical reads the lowest effort that works.
+- Spend the expensive model on judgment only: planning, schema, auth, and
+  review dispatch.
+- Watch the context tier cliffs. Some models double past 200k or 272k. Start a
+  fresh session per app or package in a monorepo.
+- Check the cache-read rate before tuning effort. Uncached repeated context
+  costs more than any effort change saves.
+
+## Jev
+
+Jev is a decision-only model. It returns typed answers and probabilities. It
+does not write code, prose, or plans. Keep those in the chat model. Use Jev
+where a threshold decides the next step.
+
+| Skill        | Call      | Use when                                          |
+| ------------ | --------- | ------------------------------------------------- |
+| `jev-route`  | `jev_ask` | The next step is ambiguous. Pick a handler.       |
+| `jev-triage` | `jev_ask` | Review depth should follow from the diff.         |
+| `jev-gate`   | `jev_ask` | The work is done and the diff is going to review. |
+
+All three ask the same way: one batched `jev_ask` with several questions.
+`jev-mcp` also exposes `jev_check`, `jev_classify`, `jev_score`, and
+`jev_triage`. Call those directly when no skill covers the judgment.
+
+- Ask one narrow question per judgment. Put the meaning in `question`. It is
+  the only text the model sees.
+- Keep thresholds in code. Pick them from what a wrong call costs.
+- `act` above 0.8, `review` above 0.5, `abstain` below. A probability near 0.5
+  is not permission. It is a reason to ask the user.
+- Treat `yes` as a probability, not a truth. Calibrate on the target domain.
+- Log the versioned model id from the response, not the alias.
+- Jev has its own key and its own provider. It does not share the chat model's
+  budget. Do not add it to `small_model`.
+
+### Set up Jev
+
+`jev-mcp` is vendored under `~/.config/opencode/node_modules`. The config runs
+it with `node` on the local entry point, not through `npx`.
+
+Get a key from `https://console.typesafe.ai/settings/keys`. Put it in
+`~/.config/typesafe/key` (mode `600`) or export `TYPESAFE_API_KEY`. Do not add
+an `environment` block with an empty key. An empty string shadows the key file
+and turns a working setup into a missing-key error.
+
+Run `jev_models` to confirm. A working key lists model ids.
+
+### Use Jev for doc rot
+
+A project `AGENTS.md` that lists files, counts, or exports rots silently. Before
+committing a doc change, ask Jev: does this assert a fact the repo already
+derives from config, a manifest, or the filesystem? If yes, cut the fact and
+point at its source.
+
+Two limits, both measured rather than assumed:
+
+- `jev_triage` `path` items are confined to the server's working directory. A path
+  outside it fails. Pass the text inline to judge a file elsewhere.
+- For per-file scoring, read the **score**, not the returned `action`. Confidence
+  on this question type runs low, so the default `act_above: 0.8` and
+  `review_above: 0.5` return `abstain` for most files even when the scores clearly
+  separate. Rank on the score and decide yourself.
 
 ## Reuse
 
@@ -59,7 +127,7 @@ Keep STE habits: short sentences, one idea, same word, imperative procedures, no
 | Agent helpers, local data, SSH glue                   | Python 3 + stdlib                                                        |
 | Windows admin (services, PnP, audio)                  | PowerShell                                                               |
 | POSIX wrappers / cron glue                            | small `sh`/`bash` — no JSON/HTML parsing                                 |
-| JVM backends / shared domain                          | Kotlin 2.2+ on JVM 21 (Java interop OK; new code is Kotlin)              |
+| JVM backends / shared domain                          | Kotlin 2.4+ on JVM 25 LTS (Java interop OK; new code is Kotlin)          |
 | Services, CLIs, concurrency, static binaries          | Go                                                                       |
 | Memory-safe systems, no-GC hot paths, embeddable libs | Rust                                                                     |
 | Containers / reverse proxy                            | Docker Compose + nginx (Rancher Desktop on GUI; engine on Linux servers) |
@@ -137,6 +205,7 @@ on PATH. Do not add a scanning SaaS.
 | `osv-scanner -r .` | Dependency CVEs. Pair with `npm audit` in Node repos.                                 |
 | `delta`            | Readable git diffs when present.                                                      |
 | `ttsc-graph` MCP   | TypeScript callers/callees when the project configures it in `opencode.json`.         |
+| `jev-mcp` MCP      | Decision primitives for thresholded judgment. See **Jev** above.                      |
 
 ## Python
 
@@ -153,7 +222,7 @@ on PATH. Do not add a scanning SaaS.
 
 From the baseball Detekt floor — do not suppress; break the function up.
 
-- Kotlin 2.2+, JVM 21. New code is Kotlin; Java is interop and existing files.
+- Kotlin 2.4+, JVM 25 LTS. New code is Kotlin; Java is interop and existing files.
 - Install Gradle on PATH (`gradle --version`) via install-tools. Do not commit
   `gradle-wrapper.jar`. `gradle` reads the project `*.kts` files.
 - Compile on the **host JDK**. JVM bytecode is portable. Docker images are **JRE
