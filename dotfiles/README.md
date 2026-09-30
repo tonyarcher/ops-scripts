@@ -151,3 +151,29 @@ mv ~/.dotfiles-backup/<timestamp>/* ~/
 
 That restores whatever you had before running `setup.sh`. To keep just a couple
 of files, delete the others.
+
+## Skills
+
+`agents/skills/<name>/` holds one skill: a `SKILL.md` with YAML frontmatter
+(`name`, `description`). The whole tree is synced to `~/.config/opencode/skills/`
+by `install-agents.py`.
+
+**Add a third-party skill by vendoring it here.** Installing one globally with
+its own installer does not work, and what happens depends on how this machine
+placed the directory. `install-agents.py` makes `~/.config/opencode/skills` a
+symlink to this tree when it can, and a copy when it cannot.
+
+- **Symlinked**, the usual case: the install follows the link and lands _inside_
+  `agents/skills/` as an untracked directory. It survives every later run, and
+  nothing in this repo knows it is there.
+- **Copied**, which is what Windows does when the symlink is refused: the next
+  run sees a tree that no longer matches, rotates the old one to `skills.bak`,
+  then `skills.bak.1`, `skills.bak.2`, and replaces it with this tree. The
+  install is gone.
+
+Either way, vendor it on purpose: a file you pinned, reviewed, and can update.
+The ones here are all hand-written.
+
+```bash
+python -m unittest discover -s dotfiles/tests -t dotfiles/tests
+```
