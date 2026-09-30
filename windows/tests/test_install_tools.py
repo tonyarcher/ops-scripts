@@ -26,6 +26,10 @@ class InstallTools(unittest.TestCase):
         self.assertIn("tool dir --bin", text)
         self.assertIn("Ensure-UvToolPath", text)
 
+    def test_installs_which_command(self) -> None:
+        text = INSTALL_TOOLS.read_text(encoding="utf-8")
+        self.assertIn("@{ Id = 'allankoechke.which'; Cmd = 'which' }", text)
+
 
 class AddLanHost(unittest.TestCase):
     def test_defaults_match_inventory_thinkpad(self) -> None:

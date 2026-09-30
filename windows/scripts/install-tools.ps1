@@ -1,5 +1,5 @@
 ﻿# Windows dev-tool installer. Mirrors `dotfiles/setup.sh --install-tools`
-# (ripgrep, eza, fzf, zoxide, jq, bat, fd, 7zip) plus vim and the AI/power-user
+# (ripgrep, eza, fzf, zoxide, jq, bat, fd, which, 7zip) plus vim and the AI/power-user
 # extras proven on this box: gh, pwsh 7, lazygit, uv, opencode, ffmpeg, Go,
 # JDK 21, Gradle 9.4 (official zip), rustup, git-delta, gitleaks, osv-scanner,
 # ast-grep, and the formatters/linters verify.py runs: shellcheck, shfmt,
@@ -46,6 +46,7 @@ $Tools = @(
     @{ Id = 'jqlang.jq'; Cmd = 'jq' }
     @{ Id = 'sharkdp.bat'; Cmd = 'bat' }
     @{ Id = 'sharkdp.fd'; Cmd = 'fd' }
+    @{ Id = 'allankoechke.which'; Cmd = 'which' }
     @{ Id = '7zip.7zip'; Cmd = '7z' }
     @{ Id = 'JesseDuffield.lazygit'; Cmd = 'lazygit' }
     @{ Id = 'astral-sh.uv'; Cmd = 'uv' }

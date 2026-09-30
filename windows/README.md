@@ -22,7 +22,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File windows/scripts/add-lan-host
 ```
 
 `install-tools.ps1` takes `-DryRun` (list only) and `-Force` (reinstall all).
-It also installs Go, JDK 21, Gradle, rustup, ruff/mypy (via uv, `~\.local\bin` on the
+It also installs `which`, Go, JDK 21, Gradle, rustup, ruff/mypy (via uv, `~\.local\bin` on the
 user PATH), git-delta, gitleaks, osv-scanner, ast-grep, and the user-wide
 AGENTS.md (`%APPDATA%\agents\AGENTS.md`, OpenCode pointer at
 `~\.config\opencode\AGENTS.md` — symlink, or a copy if Windows lacks symlink
