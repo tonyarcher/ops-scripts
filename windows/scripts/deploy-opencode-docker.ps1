@@ -34,12 +34,12 @@ function Test-Cmd($name) {
 }
 
 if (-not (Test-Cmd "docker")) {
-    Write-Error "docker not found. Install Docker Desktop."
+    Write-Error "docker not found. Install Rancher Desktop."
     exit 1
 }
 docker compose version | Out-Null
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "'docker compose' (v2) not found. Update Docker Desktop."
+    Write-Error "'docker compose' (v2) not found. Update Rancher Desktop."
     exit 1
 }
 if (-not (Test-Path $ComposeFile)) {

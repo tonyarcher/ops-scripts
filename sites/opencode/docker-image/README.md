@@ -201,4 +201,4 @@ docker compose -f sites/opencode/docker-image/docker-compose.yml run --rm openco
 - `no API keys set` — you copied `.env.example` but didn't fill keys. Edit `.env`.
 - `permission denied` on `deploy.sh` — `chmod +x sites/opencode/docker-image/deploy.sh`.
 - `port already allocated` — change `PORT_*` in `.env` or stop the host process.
-- `cannot connect to docker daemon` — start Docker Desktop / `sudo systemctl start docker`.
+- `cannot connect to docker daemon` — start Rancher Desktop / `sudo systemctl start docker`.

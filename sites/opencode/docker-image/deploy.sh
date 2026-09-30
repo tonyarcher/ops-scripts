@@ -26,7 +26,7 @@ usage() {
 
 need() {
     if ! command -v "$1" >/dev/null 2>&1; then
-        echo "error: '$1' not found. Install Docker Desktop / docker engine." >&2
+        echo "error: '$1' not found. Install Rancher Desktop, or docker engine on Linux." >&2
         exit 1
     fi
 }
