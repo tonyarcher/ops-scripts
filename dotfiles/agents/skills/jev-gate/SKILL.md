@@ -45,13 +45,43 @@ but can never invent one.
 - Score `risk`: ordered levels `low`, `medium`, `high`.
 - Check `requirements-met`: yes or no with probability.
 
-Keep thresholds in code. Defaults are `act_above: 0.8` and
-`review_above: 0.5` for choice and score, `yes_at_or_above: 0.7` and
-`no_at_or_below: 0.3` for checks. Calibrate on what a wrong call costs.
+Keep thresholds in code. For this gate the defaults are `act_above: 0.55`
+and `review_above: 0.3` for choice and score, `yes_at_or_above: 0.7` and
+`no_at_or_below: 0.3` for checks.
+
+Provisional, derived from one observed call on 2026-09-29 (verdict
+confidence 0.34, choose approve 0.56 / needs-changes 0.43, jev 1.13.0). The
+check thresholds behaved (0.71 and 0.90 both landed as `yes`) and are
+unchanged.
+
+Note what actually unblocked that call: the mapping below, not these numbers.
+The old action-driven rules escalated a low-confidence `approve` whatever the
+thresholds said. Under the table the action column is outcome-irrelevant, so
+the thresholds now mostly decide which action is reported. Fix the mapping
+before tuning a threshold, and log the confidence and choice so the numbers
+can be re-derived from a real sample.
 
 ## Map the action
 
-- `act` with `approve`: proceed to the `review` subagent.
-- `review` or `needs-changes`: fix, re-verify, and ask again.
-- `abstain` or `uncertain`: escalate to the user. Do not guess.
-- Log the versioned model id from the response, not the alias.
+Read the two returned fields separately. `action` is the confidence gate the
+tool applied (`act`, `review`, `abstain`). The chosen option is what the model
+actually picked. The option decides proceed versus fix. This table is for the
+`verdict` question; its options are `approve`, `needs-changes`, `abstain`.
+
+| chosen option   | `act`    | `review` | `abstain` |
+| --------------- | -------- | -------- | --------- |
+| `approve`       | proceed  | proceed  | proceed   |
+| `needs-changes` | fix      | fix      | fix       |
+| `abstain`       | escalate | escalate | escalate  |
+
+- proceed: dispatch the `review` subagent.
+- fix: fix, re-verify, and ask again.
+- escalate: ask the user. Do not guess.
+
+A low-confidence `approve` still goes to the reviewer, because the reviewer is
+the real backstop and nothing reaches a commit without it.
+
+Checks return `yes`, `no`, or `uncertain`. A `no` counts as `needs-changes`.
+An `uncertain` check is reported in the summary but does not block on its own.
+
+Log the versioned model id from the response, not the alias.

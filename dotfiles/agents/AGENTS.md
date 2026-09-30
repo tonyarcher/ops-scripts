@@ -37,9 +37,10 @@ Keep STE habits: short sentences, one idea, same word, imperative procedures, no
 - Dispatch `review` on the full uncommitted diff (including untracked) before
   calling the work done.
 - Run the `jev-gate` skill (`jev_ask` on the full uncommitted diff) before
-  the work is done. `act` proceeds; `review` means fix and re-ask; `abstain`
-  escalates. Skip when `jev-mcp` has no key, or when the diff is only docs,
-  comments, or formatting. Say that you skipped it and name the reason.
+  the work is done. Read the chosen option first: `approve` proceeds to
+  `review`, `needs-changes` fixes and re-asks, `abstain` escalates. Skip when
+  `jev-mcp` has no key, or when the diff is only docs, comments, or
+  formatting. Say that you skipped it and name the reason.
 
 ## Model cost
 
@@ -72,9 +73,13 @@ All three ask the same way: one batched `jev_ask` with several questions.
 
 - Ask one narrow question per judgment. Put the meaning in `question`. It is
   the only text the model sees.
-- Keep thresholds in code. Pick them from what a wrong call costs.
-- `act` above 0.8, `review` above 0.5, `abstain` below. A probability near 0.5
-  is not permission. It is a reason to ask the user.
+- Keep thresholds in code. Pick them from what a wrong call costs. Check the
+  mapping before the numbers: an action-driven mapping escalates a
+  low-confidence `approve` wherever the thresholds sit.
+- `jev-gate` uses `act_above: 0.55` and `review_above: 0.3`, and maps the
+  chosen option rather than the action. Provisional: one observation,
+  2026-09-29 on jev 1.13.0. Re-derive once a real sample exists, and log the
+  confidence and choice each time.
 - Treat `yes` as a probability, not a truth. Calibrate on the target domain.
 - Log the versioned model id from the response, not the alias.
 - Jev has its own key and its own provider. It does not share the chat model's
@@ -104,9 +109,10 @@ Two limits, both measured rather than assumed:
 - `jev_triage` `path` items are confined to the server's working directory. A path
   outside it fails. Pass the text inline to judge a file elsewhere.
 - For per-file scoring, read the **score**, not the returned `action`. Confidence
-  on this question type runs low, so the default `act_above: 0.8` and
-  `review_above: 0.5` return `abstain` for most files even when the scores clearly
-  separate. Rank on the score and decide yourself.
+  on this question type runs low, so the `jev_triage` and `jev_score` tool
+  defaults of `act_above: 0.8` and `review_above: 0.5` return `abstain` for most
+  files even when the scores clearly separate. Those are the tool defaults, not
+  the `jev-gate` numbers above. Rank on the score and decide yourself.
 
 ## Reuse
 
