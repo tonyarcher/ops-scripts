@@ -1,0 +1,129 @@
+{
+    "$schema": "https://opencode.ai/config.json",
+    "model": "opencode-go/muse-spark-1.3-contributor#high",
+    "small_model": "opencode-go/muse-spark-1.3-contributor",
+    "default_agent": "build",
+    "subagent_depth": 2,
+    "compaction": {
+        "auto": true,
+        "prune": true,
+        "reserved": 20000
+    },
+    "tool_output": {
+        "max_lines": 800,
+        "max_bytes": 24000
+    },
+    "disabled_providers": ["google"],
+    "permission": {
+        "edit": "allow"
+    },
+    "agent": {
+        "plan": {
+            "mode": "primary",
+            "model": "xai/grok-4.7#xhigh",
+            "description": "Planning - Grok via X subscription (max reasoning)",
+            "permission": {
+                "edit": {
+                    "*": "deny",
+                    "~/.opencode/plan/*": "allow"
+                }
+            },
+            "prompt": "You are the planner. Produce a short task list naming the modules touched, the risks, and which verification/tests must be added to cover the change. The last step must be an independent review by the review agent before any commit. Never edit files. Never commit. Use explore only to locate files and symbols. Do not treat grep hits as understanding; if you need behavior or control flow, read the code. Hand the plan to the build agent."
+        },
+        "build": {
+            "mode": "primary",
+            "model": "opencode-go/muse-spark-1.3-contributor#xhigh",
+            "description": "Main implementer after design",
+            "permission": {
+                "edit": "allow"
+            },
+            "prompt": "You are the implementer. Follow documented project conventions (AGENTS.md, CONTRIBUTING.md, or equivalent) strictly. Use explore only to locate files and symbols. Do not treat grep hits as understanding; read the surrounding code yourself (or after explore returns paths) before changing behavior. Run the repository's canonical verification (tests, type checks, lints, builds) as discovered from its configuration and ensure it passes before reporting done. If you touched core logic, data, or API modules, ensure new behavior is covered by tests. Never modify AGENTS.md or opencode.json unless the task explicitly asks. Before dispatching review, run the jev-gate skill: one jev_ask over the full uncommitted diff, including untracked files. Read the chosen option first: `approve` proceeds to `review`, `needs-changes` fixes and re-asks, `abstain` escalates; the skill holds the thresholds and the full table. Skip the gate when the diff is only documentation, comments, or formatting, or when jev-mcp has no key, and say in the summary that you skipped it and why. After implementation and verification, dispatch the review agent on the full uncommitted diff and wait for its verdict; REQUEST-CHANGES means fix, re-verify, and re-dispatch until it returns APPROVE, naming the files changed since the last review so the reviewer scopes to that delta instead of re-tracing the full diff. Review is a precondition for committing, not a prohibition on it: never run git commit or git push until the review agent has returned APPROVE, and only when the user asks for the commit. Finish with a summary: files changed, verification added, review verdict, and the exact verification command output."
+        },
+        "review": {
+            "mode": "all",
+            "model": "opencode-go/mimo-v2.6-pro",
+            "steps": 6,
+            "description": "Reports only probable bugs as Blocker/Major/Minor; minimal scoped review",
+            "prompt": "Review only the uncommitted diff, including task-related untracked files, and the minimum directly related context needed to find a concrete bug. Do not inspect unrelated files, history, documentation, or architecture. Do not run tests, linters, type checks, builds, or the repository verifier, and do not execute code or shell one-liners to confirm a claim; reason from the diff instead. Do not call MCP tools, including jev. Never edit files or propose fixes. The implementer does the reasoning; you report only what would break and how badly. Report only probable bugs with a concrete failure path. Ignore style, preferences, speculative edge cases, pre-existing issues, and missing tests unless the changed code demonstrably breaks required behavior. Omit uncertain suspicions instead of downgrading them into findings. Blocker means completion is impossible or the change can cause destructive effects, secret exposure, or unrecoverable data loss. Major means a normal or important path is broken or returns incorrect results. Minor means a concrete bug with limited impact. Each finding is one to three sentences containing the severity, file:line, what breaks, and direct evidence. Do not include code blocks, diffs, patches, redesigns, alternatives, or extra explanation. Return exactly APPROVE when no probable bug remains. Otherwise return REQUEST-CHANGES followed by the short findings list.",
+            "permission": {
+                "bash": "allow",
+                "edit": "deny"
+            }
+        },
+        "general": {
+            "mode": "subagent",
+            "model": "xai/grok-4.7#high",
+            "description": "Large self-contained implementation work in a child session",
+            "permission": {
+                "edit": "allow"
+            }
+        },
+        "explore": {
+            "mode": "subagent",
+            "model": "opencode-go/muse-spark-1.3-contributor#low",
+            "description": "Locate, then read enough to explain. Do not stop at grep hits.",
+            "permission": {
+                "edit": "deny"
+            }
+        }
+    },
+    "mcp": {
+        "servers": {
+            "jev-mcp": {
+                "type": "local",
+                "command": ["node", "C:/Users/tony/.config/opencode/node_modules/jev-mcp/dist/index.js"]
+            }
+        }
+    },
+    "formatter": {
+        "ktlint": {
+            "command": ["ktlint", "-F", "$FILE"]
+        },
+        "prettier-standalone": {
+            "command": ["prettier", "--write", "$FILE"],
+            "extensions": [
+                ".js",
+                ".jsx",
+                ".mjs",
+                ".cjs",
+                ".ts",
+                ".tsx",
+                ".mts",
+                ".cts",
+                ".html",
+                ".htm",
+                ".css",
+                ".scss",
+                ".sass",
+                ".less",
+                ".vue",
+                ".svelte",
+                ".json",
+                ".jsonc",
+                ".yaml",
+                ".yml",
+                ".toml",
+                ".xml",
+                ".md",
+                ".mdx",
+                ".graphql",
+                ".gql"
+            ]
+        },
+        "powershell": {
+            "command": [
+                "pwsh",
+                "-NoProfile",
+                "-Command",
+                "& { param($p) Invoke-Formatter -ScriptDefinition (Get-Content -Raw -LiteralPath $p) | Set-Content -Encoding utf8 -LiteralPath $p }",
+                "$FILE"
+            ],
+            "extensions": [".ps1", ".psm1", ".psd1"]
+        },
+        "sql": {
+            "command": ["sqlfluff", "fix", "--dialect", "postgres", "--config", ".sqlfluff", "$FILE"],
+            "extensions": [".sql"]
+        }
+    },
+    "lsp": true
+}
