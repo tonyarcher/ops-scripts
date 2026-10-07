@@ -34,15 +34,15 @@ function Find-BestJavaHome([string[]]$Roots) {
     foreach ($root in $Roots) {
         if (Test-Path $root) {
             $cands += @(Get-ChildItem $root -Directory -ErrorAction SilentlyContinue |
-                Where-Object { Test-Path (Join-Path $_.FullName 'bin\java.exe') })
+                    Where-Object { Test-Path (Join-Path $_.FullName 'bin\java.exe') })
         }
     }
     $jdks = @($cands | Where-Object { $_.Name -like 'jdk*' })
     $pool = if ($jdks.Count -gt 0) { $jdks } else { $cands }
     return ($pool | Sort-Object {
-        $m = [regex]::Match($_.Name, '\d+(\.\d+)*')
-        if ($m.Success) { [version]$m.Value } else { [version]'0.0' }
-    } -Descending | Select-Object -First 1)
+            $m = [regex]::Match($_.Name, '\d+(\.\d+)*')
+            if ($m.Success) { [version]$m.Value } else { [version]'0.0' }
+        } -Descending | Select-Object -First 1)
 }
 $bestJava = Find-BestJavaHome @(
     'C:\Program Files\Eclipse Adoptium',
@@ -65,8 +65,8 @@ if (-not $env:GRADLE_HOME) {
     $opt = Join-Path $HOME '.local\opt'
     if (Test-Path $opt) {
         $localGradle = @(Get-ChildItem $opt -Directory -ErrorAction SilentlyContinue |
-            Where-Object { $_.Name -like 'gradle-*' -and (Test-Path (Join-Path $_.FullName 'bin\gradle.bat')) } |
-            Sort-Object Name -Descending | Select-Object -First 1)
+                Where-Object { $_.Name -like 'gradle-*' -and (Test-Path (Join-Path $_.FullName 'bin\gradle.bat')) } |
+                Sort-Object Name -Descending | Select-Object -First 1)
         if ($localGradle) { $env:GRADLE_HOME = $localGradle.FullName }
     }
 }
@@ -90,9 +90,52 @@ if (Test-Path "$HOME\.cargo\bin") { Add-PathPrefix "$HOME\.cargo\bin" }
 # install-tools.ps1 also persists it on the user PATH.
 if (Test-Path "$HOME\.local\bin") { Add-PathPrefix "$HOME\.local\bin" }
 
-# Python -- pip --user
-if (Test-Path "$HOME\AppData\Roaming\Python\Python312\Scripts") {
-    Add-PathPrefix "$HOME\AppData\Roaming\Python\Python312\Scripts"
+# Python -- pip --user. Enumerate the versioned directories rather than naming
+# one: the interpreter is reinstalled and upgraded over time, and a hardcoded
+# Python3xx silently stops matching, which leaves pip's console scripts off PATH
+# with no error to notice it by.
+$PythonUserBase = "$HOME\AppData\Roaming\Python"
+if (Test-Path $PythonUserBase) {
+    # Two things this sort has to get right, both learned the hard way.
+    # Parse Python<major><minor> into a real version: Python39 sorts AFTER
+    # Python314 as text but is five releases older, so a name sort hands
+    # priority to the oldest interpreter. Casting the bare digits to [version]
+    # throws on "39" because a version needs a dot, which kills profile load
+    # under StrictMode, so major and minor are reassembled with a dot. Then
+    # iterate OLDEST first, because Add-PathPrefix prepends - the last
+    # directory in wins the head of PATH, so walking up to the newest is what
+    # leaves the newest Scripts directory in front.
+    Get-ChildItem $PythonUserBase -Directory -ErrorAction SilentlyContinue |
+        Sort-Object {
+            if ($_.Name -match '^Python(\d)(\d+)$') {
+                [version]::new("$($Matches[1]).$($Matches[2])")
+            }
+            else { [version]'0.0' }
+        } |
+        ForEach-Object {
+            $Scripts = Join-Path $_.FullName 'Scripts'
+            if (Test-Path $Scripts) { Add-PathPrefix $Scripts }
+        }
+}
+
+# The interpreter itself, not just its scripts. uv-managed CPython lives under
+# Roaming\uv\python\cpython-<version>-<build>, where the patch and build are part
+# of the directory name, so the directories are enumerated and the 3.12 line is
+# selected rather than one full path being named. Naming it would rot on the next
+# patch release with nothing to notice it by.
+#
+# 3.12 and not "newest" on purpose: CI pins python-version 3.12 and both repos
+# target py312 in ruff.toml, so this is the interpreter the work is verified
+# against. Leaving the newest here lets a test pass on an interpreter CI never
+# runs, which is how the json decoder difference between 3.12 and 3.14 shipped a
+# test that only held on the machine that wrote it.
+$UvPythonBase = "$HOME\AppData\Roaming\uv\python"
+if (Test-Path $UvPythonBase) {
+    $Newest312 = Get-ChildItem $UvPythonBase -Directory -Filter 'cpython-3.12*' -ErrorAction SilentlyContinue |
+        Sort-Object Name -Descending |
+        Where-Object { Test-Path (Join-Path $_.FullName 'python.exe') } |
+        Select-Object -First 1
+    if ($Newest312) { Add-PathPrefix $Newest312.FullName }
 }
 
 # Node -- npm globals land here
