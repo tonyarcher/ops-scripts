@@ -186,12 +186,9 @@ reused.” Implement in the app first.
 Strict TypeScript, no `any`, no `!` except tests. Lit for UI unless the project
 says otherwise. Formatting and element prefixes live in the project file.
 Untrusted URLs go through an allow-list (`http:`/`https:`). Do not log tokens.
-Keep Lit component classes thin: put non-trivial template markup in a sibling
-`*-render.ts` module that takes a host object. Pass state and callbacks; a value
-the user edits must go through a callback so the element re-renders — a plain
-field on the host literal is not reactive. Do not build a whole view as one
-`return html` template with a pile of `${}` substitutions: bind a few values per
-template and split sections into child components or small render helpers.
+Do not build a whole view as one `return html` template with a pile of `${}`
+substitutions: bind a few values per template and split sections into child
+components or small render helpers.
 
 ## Async lifetime
 
