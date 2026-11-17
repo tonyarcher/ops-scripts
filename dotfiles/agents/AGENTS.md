@@ -27,23 +27,15 @@ Keep STE habits: short sentences, one idea, same word, imperative procedures, no
 ## Workflow
 
 - Read the workspace `AGENTS.md` before editing that tree.
-- After implementation, verification, jev-gate (when required), and `review` returns `APPROVE`, create a conventional commit (stage files explicitly). Do not push, deploy, or ship unless the user explicitly asks. Keep fixing and re-reviewing until `APPROVE` before committing.
+- Do not commit or push unless the user asks. Conventional commits when they do.
 - Do not edit `AGENTS.md` or `opencode.json` unless the task asks.
-- Verify with that repo's own tests/lint/build. Core/data/API changes need tests.
-- Local coverage gates (per-module Jacoco verification) must pass individually on a
-  developer machine, not only in CI with integration tests.
+- Verify with that repo’s own tests/lint/build. Core/data/API changes need tests.
 - Run those entry points as written. Do not re-invoke their tools through bare
   `npx` — it adds resolution overhead and stalls.
 - Treat fast builds as a high priority. Run independent builds, tests, and
   checks concurrently instead of serially.
 - Dispatch `review` on the full uncommitted diff (including untracked) before
   calling the work done.
-- Break a large review apart. The reviewer has a small step budget, so a diff
-  that spans more than one area exhausts it before it reaches a verdict:
-  dispatch one scoped review per area (build tooling, deploy config, each
-  service, the client), each given the files it owns. A review that returns no
-  verdict is not an `APPROVE` — re-scope and re-dispatch, and never read a
-  step-limited report as consent.
 - Run the `jev-gate` skill (`jev_ask` on the full uncommitted diff) before
   the work is done. Read the chosen option first: `approve` proceeds to
   `review`, `needs-changes` fixes and re-asks, `abstain` escalates. Skip when
@@ -108,7 +100,7 @@ Run `jev_models` to confirm. A working key lists model ids.
 ### Use Jev for doc rot
 
 A project `AGENTS.md` that lists files, counts, or exports rots silently. Before
-a doc change is committed, ask Jev: does this assert a fact the repo already
+committing a doc change, ask Jev: does this assert a fact the repo already
 derives from config, a manifest, or the filesystem? If yes, cut the fact and
 point at its source.
 
