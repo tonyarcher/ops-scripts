@@ -35,7 +35,10 @@ Keep STE habits: short sentences, one idea, same word, imperative procedures, no
 - Treat fast builds as a high priority. Run independent builds, tests, and
   checks concurrently instead of serially.
 - Dispatch `review` on the full uncommitted diff (including untracked) before
-  calling the work done.
+  calling the work done, and before **every** commit, push, or deploy. Fix
+  blocking findings and re-dispatch until `APPROVE`. A review that returns no
+  verdict, or a step-limited report, is not an `APPROVE` — re-scope and
+  re-dispatch. This applies to every project, not just this one.
 - Run the `jev-gate` skill (`jev_ask` on the full uncommitted diff) before
   the work is done. Read the chosen option first: `approve` proceeds to
   `review`, `needs-changes` fixes and re-asks, `abstain` escalates. Skip when
@@ -183,6 +186,10 @@ reused.” Implement in the app first.
 Strict TypeScript, no `any`, no `!` except tests. Lit for UI unless the project
 says otherwise. Formatting and element prefixes live in the project file.
 Untrusted URLs go through an allow-list (`http:`/`https:`). Do not log tokens.
+Keep Lit component classes thin: put non-trivial template markup in a sibling
+`*-render.ts` module that takes a host object. Pass state and callbacks; a value
+the user edits must go through a callback so the element re-renders — a plain
+field on the host literal is not reactive.
 
 ## Async lifetime
 
