@@ -1,57 +1,67 @@
 ---
 name: jev-triage
-description: Set review depth with one fast Jev triage call over the diff
+description: Rank changed files for review with the Jev batch triage tool
 ---
 
-# Jev triage
+# Jev review triage
 
-Use this skill at the start of a review task, before the deep read.
-Jev is a decision-only model. It returns typed answers, never prose.
-The agent owns context collection. Jev only judges the bundle it
-receives. Never use Jev to generate fixes or review prose. Never use
-it for deep reasoning. It scores options defined in code. It cannot
-invent one.
+Use this skill before the deep review read. It sets review order and depth. It
+does not replace reading the full diff and the surrounding code.
 
 ## Setup
 
-Setup is not restated here. It lives in the user-wide `AGENTS.md` under
-**Jev → Set up Jev**. Confirm the server is live with `jev_models`; a working
-key lists model ids.
+Confirm the server with `jev_models`. If it is unavailable, review by reading.
+Say that Jev was skipped. This skill requires `jev-mcp` 0.5.0 or later because it
+uses `jev_triage`.
 
-If the server is not live, skip Jev and review by
-reading. Say that Jev was skipped.
+## Build the items
 
-## Build the triage bundle
+1. Enumerate changed files, including relevant untracked source and docs.
+2. Exclude `dist/`, `coverage/`, `node_modules/`, `build/`, and lockfiles.
+3. Scan for secrets before sending file contents.
+4. Use `path` only for clean files below the server's allowed roots.
+5. If a file needs redaction, pass the redacted content as `text` instead.
+6. Keep each item focused on one file. Split batches above 50 items.
 
-Send only the bounded context the decision needs. Reuse the
-`jev-gate` bundle rules: baseline-to-current changes with relevant
-untracked source and docs, excluding `dist/`, `coverage/`,
-`node_modules/`, `build/`, and lockfiles. Redact secrets. Report
-redaction explicitly. Attach requirements and verification output so
-the requirements check has evidence.
+Never route around a denied path or a refused credential file. A file access
+error means the file was not judged.
 
-Missing, redacted, or truncated evidence stays visible in the result.
-Never treat missing evidence as clean.
+Send the requirements and verification summary as context in each question or
+in a structured `text` item. Questions in one request cannot see one another.
 
-## Ask one batched call
+## Ask one batch per group
 
-Prefer a single `jev_ask` call. Extra questions add almost no latency
-or cost. Define the option set in code. Questions cannot see each
-other. State speculative premises explicitly.
+Use `jev_triage` with these questions for every item:
 
-- Classify `verdict`: `approve`, `needs-changes`, `abstain`.
-- Score `risk`: ordered levels `low`, `medium`, `high`.
-- Check `requirements-met`: yes or no with probability.
-- Score `complexity`: ordered levels `simple`, `involved`, `deep`.
+- `requirements-relevant`: the file contains changes relevant to the stated
+  requirements.
+- `risk`: review risk on three concrete levels.
+    - `0`: docs, tests, comments, or isolated local behavior.
+    - `1`: application logic, API behavior, concurrency, or error handling.
+    - `2`: authentication, secrets, schema migration, destructive data operations,
+      or production configuration.
+- `complexity`: review complexity on three concrete levels.
+    - `0`: one local change with direct evidence.
+    - `1`: several call sites or moderate control flow.
+    - `2`: cross-module behavior, protocol changes, or subtle invariants.
 
-Keep thresholds in code. Defaults are `act_above: 0.8` and
-`review_above: 0.5` for choice and score, `yes_at_or_above: 0.7` and
-`no_at_or_below: 0.3` for checks. Calibrate on what a wrong call costs.
+Use `act_above: 0.8` and `review_above: 0.5` for scores. Use
+`yes_at_or_above: 0.7` and `no_at_or_below: 0.3` for the check. Compute the check
+verdict from the raw `noul` probability; do not depend on a `verdict` field.
 
-## Map the action
+## Route the review
 
-- Low risk with requirements met and confident: quick pass, then read
-  the flagged files only.
-- Anything else: full read of the diff and the surrounding code.
-- `abstain` or `uncertain`: escalate to the user. Do not guess.
-- Log the versioned model id from the response, not the alias.
+Read every item's `answers` or `error` before choosing a review path.
+
+- Any item error: read that file manually.
+- `risk` at or above 2, or `complexity` at or above 2: full read.
+- `requirements-relevant` is `no` or `uncertain`: full read to confirm scope.
+- Low risk, simple complexity, and relevant `yes`: quick pass, then read the
+  surrounding code for any flagged behavior.
+- Anything else: full read.
+
+Rank files by `risk`, then `complexity`, and read the highest first. Low risk is
+not permission to skip a changed file.
+
+Log the versioned model id, item scores, check probabilities, failures, and the
+resulting review order.

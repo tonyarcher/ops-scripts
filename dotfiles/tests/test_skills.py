@@ -5,13 +5,13 @@ Run: python -m unittest discover -s dotfiles/tests -t dotfiles/tests
 
 This exists because install-agents.py syncs that directory as one unit: it
 points ~/.config/opencode/skills at this tree, so whatever ships here is the
-whole skill list. Four things are checked, all of them ones a harness reads:
+whole skill list. Five things are checked, all of them ones a harness reads:
 the file is named SKILL.md, the frontmatter parses, it carries a non-empty
-name and description, and the name matches the directory in kebab-case.
+name and description, folded descriptions are joined, and the name matches
+the directory in kebab-case.
 
 Deliberately not checked: file size, binary extensions, symlinks, upstream
-provenance, and whether this README names each skill. Those all guard a
-vendored third-party skill, and there are none. Add a check when there is
+version, and whether this README names each skill. Add a check when there is
 something real to check, not before.
 """
 
@@ -43,16 +43,29 @@ def frontmatter(skill_md: Path) -> dict[str, str]:
     match = FRONTMATTER.match(skill_md.read_text(encoding="utf-8"))
     if match is None:
         raise ValueError("no frontmatter block opening with --- on line 1")
+    lines = match.group(1).splitlines()
     fields: dict[str, str] = {}
-    for line in match.group(1).splitlines():
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        index += 1
         if not line.strip():
             continue
         pair = KEY.match(line)
         if pair is None:
             raise ValueError(f"frontmatter line is not `key: value`: {line!r}")
-        if pair.group(1) in fields:
-            raise ValueError(f"duplicate frontmatter key: {pair.group(1)}")
-        fields[pair.group(1)] = pair.group(2).strip()
+        key, value = pair.groups()
+        if key in fields:
+            raise ValueError(f"duplicate frontmatter key: {key}")
+        if value in {">", "|", ">-", "|-"}:
+            parts: list[str] = []
+            while index < len(lines) and (
+                not lines[index].strip() or lines[index].startswith(" ")
+            ):
+                parts.append(lines[index].strip())
+                index += 1
+            value = " ".join(part for part in parts if part)
+        fields[key] = value.strip()
     return fields
 
 
@@ -90,6 +103,34 @@ class SkillShape(unittest.TestCase):
         self.assertGreaterEqual(
             len(skill_dirs()), MIN_SKILLS, "no skills found; is the path right?"
         )
+
+    def test_typesafe_skill_is_vendored(self) -> None:
+        skill = SKILLS / "typesafe-ai" / "SKILL.md"
+        self.assertTrue(skill.is_file(), "vendored TypeSafe skill is missing")
+        description = frontmatter(skill)["description"]
+        self.assertNotIn("\n", description)
+        self.assertGreater(len(description), 80)
+
+
+class JevSkillPolicy(unittest.TestCase):
+    def test_triage_uses_the_batch_tool(self) -> None:
+        text = (SKILLS / "jev-triage" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("`jev_triage`", text)
+        self.assertIn("`path`", text)
+        self.assertIn("file access\nerror", text)
+
+    def test_gate_uses_atomic_checks(self) -> None:
+        text = (SKILLS / "jev-gate" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("`check` questions", text)
+        self.assertNotIn("Classify `verdict`", text)
+        self.assertIn("Any check is `uncertain`", text)
+        self.assertIn("raw `noul` probability", text)
+
+    def test_route_consumes_both_checks(self) -> None:
+        text = (SKILLS / "jev-route" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("`human-required`", text)
+        self.assertIn("`prose-suffices`", text)
+        self.assertIn("Map every answer", text)
 
 
 if __name__ == "__main__":

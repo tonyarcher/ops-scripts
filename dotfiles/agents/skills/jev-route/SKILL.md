@@ -1,59 +1,59 @@
 ---
 name: jev-route
-description: Pick the handler for a task with one fast Jev routing call
+description: Pick a task handler with one fast Jev routing call
 ---
 
 # Jev route
 
-Use this skill when the next step is ambiguous: which agent, tool,
-or handler owns the task. Jev is a decision-only model. It returns
-typed answers, never prose. The agent owns context collection. Jev
-only judges the bundle it receives. Never use Jev to write code,
-prose, or plans. Never use it for deep reasoning. It picks from
-options defined in code. It cannot invent one.
+Use this skill when the next handler is ambiguous. Jev selects from options the
+agent defines. It cannot invent a handler or write a plan.
 
 ## Setup
 
-Setup is not restated here. It lives in the user-wide `AGENTS.md` under
-**Jev → Set up Jev**. Confirm the server is live with `jev_models`; a working
-key lists model ids.
+Confirm the server with `jev_models`. If it is unavailable, route by rule:
+locate-only work goes to `explore`, design goes to `plan`, implementation goes to
+`build`, a behavior check goes to `review`, and destructive or ambiguous work
+escalates to the user. Say that Jev was skipped.
 
-If the server is not live, skip Jev and route by
-rule: locate-only work goes to `explore`, design goes to `plan`,
-implementation goes to `build`, a behavior check goes to `review`,
-and destructive or ambiguous work escalates to the user. Say that
-Jev was skipped.
+## Build the state
 
-## Build the routing bundle
-
-Send only the bounded context the decision needs.
+Send only the evidence that separates the candidate handlers:
 
 1. State the request in one or two sentences.
-2. List each candidate handler with one line on what it does:
-   deterministic code, `explore`, `plan`, `build`, `review`, or human.
-3. Attach only the evidence that separates the candidates.
-4. Redact secrets. Report redaction explicitly.
+2. List each candidate handler with a concrete description.
+3. Include relevant file paths, constraints, and destructive effects.
+4. Redact secrets and report the redaction.
 
 ## Ask one batched call
 
-Prefer a single `jev_ask` call. Extra questions add almost no latency
-or cost. Questions cannot see each other. State speculative premises
-explicitly.
+Use one `jev_ask`:
 
-- Classify `handler`: one option per candidate. Jev can pick the
-  wrong option but can never invent one.
-- Check `needs-specialist`: yes or no with probability. Catches work
-  that looks routine but needs deep reasoning or a human.
-- Check `prose-suffices`: yes or no with probability. A yes points
-  away from dispatching an agent at all.
+- Classify `handler` from the candidate set. Include `answer-directly` when a
+  conversational answer is valid and `human` when escalation is valid. Set
+  `add_none: false` because one candidate must apply.
+- Check `human-required`: the request needs a person because it is destructive,
+  ambiguous, or outside the agent's authority.
+- Check `prose-suffices`: the request can be answered without editing files or
+  dispatching a subagent.
 
-Keep thresholds in code. Defaults are `act_above: 0.8` and
-`review_above: 0.5` for choice and score, `yes_at_or_above: 0.7` and
-`no_at_or_below: 0.3` for checks. Calibrate on what a wrong call costs.
+Use `act_above: 0.8` and `review_above: 0.5` for the choice. Use
+`yes_at_or_above: 0.7` and `no_at_or_below: 0.3` for the checks. `jev_ask` returns
+raw `noul` probabilities; compute `yes`, `no`, or `uncertain` in code.
 
-## Map the action
+## Map every answer
 
-- `act` with the handler: dispatch it.
-- `review` or low confidence: dispatch with a note on what to verify.
-- `abstain` or `uncertain`: escalate to the user. Do not guess.
-- Log the versioned model id from the response, not the alias.
+Apply these rules in order:
+
+1. `human-required` is `yes` or `uncertain`: escalate to the user.
+2. `prose-suffices` is `yes`: answer directly.
+3. The chosen handler is `human`: escalate to the user.
+4. The handler action is `act`: dispatch it.
+5. The handler action is `review`: dispatch it with a note naming what it must
+   verify.
+6. The handler action is `abstain`: escalate to the user.
+
+An `uncertain` `prose-suffices` result does not override a clear handler choice.
+Report it in the dispatch note.
+
+Log the versioned model id, the chosen handler, its probability, and both check
+probabilities.

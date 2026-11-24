@@ -5,12 +5,16 @@
         "edit": "allow"
     },
     "tools": {
+        "execute": false,
         "jev-mcp_*": false
     },
     "mcp": {
         "jev-mcp": {
             "type": "local",
-            "command": ["npx", "-y", "jev-mcp@0.4.0"],
+            "command": ["npx", "-y", "jev-mcp@0.5.1"],
+            "environment": {
+                "JEV_MODEL": "jev-1.14.0"
+            },
             "enabled": false
         }
     },
@@ -53,6 +57,7 @@
             "mode": "subagent",
             "model": "ai/grok-4.6#high",
             "description": "Write",
+            "prompt": "You are the focused worker. Do exactly what the dispatch prompt asks and nothing more. Follow AGENTS.md conventions. Read surrounding code before changing behavior. Run the canonical verification once when you changed code and report its output. Do not expand scope, refactor neighbors, or improve unrelated code. Do not dispatch further subagents and do not dispatch review; the parent coordinates fan-out and review. Single pass: when the task is done, stop and return a short summary. Do not add follow-ups.",
             "permission": {
                 "edit": "allow"
             }
@@ -61,6 +66,7 @@
             "mode": "subagent",
             "model": "opencode-go/muse-spark-1.3-contributor",
             "description": "Locate, then read enough to explain. Do not stop at grep hits.",
+            "prompt": "You are the locator. Do exactly what the dispatch prompt asks and nothing more. Locate files and symbols, then read enough surrounding code to explain. Return file paths with line numbers and a short summary. Never edit files. Never run tests, lints, builds, verification, or shell probes. Do not call MCP tools including jev. Do not dispatch further subagents. Single pass: when the asked question is answered, stop and return. Do not add follow-ups, scope expansion, or speculative extras.",
             "permission": {
                 "edit": "deny"
             }

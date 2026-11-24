@@ -114,6 +114,7 @@ class ConfigSync(unittest.TestCase):
         jev = servers["jev-mcp"]
         assert isinstance(jev, dict)
         self.assertIsNot(jev.get("enabled"), False)
+        self.assertEqual(jev.get("environment"), {"JEV_MODEL": "jev-1.14.0"})
 
 
 if __name__ == "__main__":

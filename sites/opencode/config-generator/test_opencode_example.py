@@ -15,9 +15,13 @@ from __future__ import annotations
 import copy
 import importlib.util
 import json
+import subprocess
 import unittest
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
+
+from generate_config_opencode import run_opencode
 
 HERE = Path(__file__).resolve().parent
 SEED_PATH = HERE / "opencode.json.example"
@@ -56,13 +60,17 @@ class SeedShape(unittest.TestCase):
         jev = config["mcp"].get("jev-mcp")
         assert isinstance(jev, dict)
         self.assertEqual(jev["type"], "local")
-        assert isinstance(jev.get("command"), list)
-        self.assertIn("jev-mcp", " ".join(jev["command"]))
+        self.assertEqual(
+            jev["command"],
+            ["npx", "-y", "jev-mcp@0.5.1"],
+        )
+        self.assertEqual(jev.get("environment"), {"JEV_MODEL": "jev-1.14.0"})
         self.assertIs(jev["enabled"], False)
 
     def test_jev_gated_off_globally(self) -> None:
         config = load_seed()
         assert isinstance(config.get("tools"), dict)
+        self.assertIs(config["tools"].get("execute"), False)
         self.assertIs(config["tools"].get("jev-mcp_*"), False)
 
     def test_jev_enabled_only_on_build(self) -> None:
@@ -89,10 +97,25 @@ class SeedShape(unittest.TestCase):
             assert isinstance(model, str)
             self.assertIn("/", model)
             self.assertIn("description", agent)
-            # `general` and `explore` ship without a prompt (upstream
-            # default); the rule is that no agent uses legacy `system`.
+            # Every agent ships an explicit `prompt`; the rule is that
+            # no agent uses legacy `system`.
+            self.assertIn("prompt", agent)
             self.assertNotIn("system", agent)
             self.assertNotIn("permissions", agent)
+
+    def test_subagents_are_single_pass(self) -> None:
+        config = load_seed()
+        agents = config["agent"]
+        assert isinstance(agents, dict)
+        for name in ("general", "explore"):
+            agent = agents[name]
+            assert isinstance(agent, dict)
+            self.assertEqual(agent.get("mode"), "subagent")
+            prompt = agent.get("prompt")
+            assert isinstance(prompt, str)
+            self.assertIn("nothing more", prompt)
+            self.assertIn("Single pass", prompt)
+            self.assertIn("Do not dispatch further subagents", prompt)
 
     def test_default_agent_is_primary(self) -> None:
         config = load_seed()
@@ -105,6 +128,27 @@ class SeedShape(unittest.TestCase):
     def test_no_small_model_jev_chat_unverified(self) -> None:
         config = load_seed()
         self.assertNotIn("small_model", config)
+
+
+class OpencodeCli(unittest.TestCase):
+    def test_run_uses_resolved_path_shim(self) -> None:
+        completed = subprocess.CompletedProcess(
+            ["opencode.CMD", "debug", "config"], 0, b"", b""
+        )
+        with (
+            patch(
+                "generate_config_opencode.shutil.which",
+                return_value="C:/npm/opencode.CMD",
+            ),
+            patch(
+                "generate_config_opencode.subprocess.run", return_value=completed
+            ) as run,
+        ):
+            result = run_opencode(["debug", "config"])
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(
+            run.call_args.args[0], ["C:/npm/opencode.CMD", "debug", "config"]
+        )
 
 
 class GeneratorKeys(unittest.TestCase):

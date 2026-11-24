@@ -27,13 +27,10 @@ def run_opencode(
             cmd, capture_output=True, timeout=timeout, env=env, check=False
         )
 
-    try:
-        result = _run(["opencode", *args])
-    except FileNotFoundError:
-        exe = shutil.which("opencode")
-        if exe is None:
-            raise
-        result = _run([exe, *args])
+    exe = shutil.which("opencode")
+    if exe is None:
+        raise FileNotFoundError("opencode not found on PATH")
+    result = _run([exe, *args])
     # capture_output=True always yields bytes; the Optional type still needs narrowing.
     stdout = (result.stdout or b"").decode("utf-8", errors="replace")
     stderr = (result.stderr or b"").decode("utf-8", errors="replace")

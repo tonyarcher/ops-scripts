@@ -64,34 +64,37 @@ Jev is a decision-only model. It returns typed answers and probabilities. It
 does not write code, prose, or plans. Keep those in the chat model. Use Jev
 where a threshold decides the next step.
 
-| Skill        | Call      | Use when                                          |
-| ------------ | --------- | ------------------------------------------------- |
-| `jev-route`  | `jev_ask` | The next step is ambiguous. Pick a handler.       |
-| `jev-triage` | `jev_ask` | Review depth should follow from the diff.         |
-| `jev-gate`   | `jev_ask` | The work is done and the diff is going to review. |
+| Skill        | Call         | Use when                                         |
+| ------------ | ------------ | ------------------------------------------------ |
+| `jev-route`  | `jev_ask`    | The next step is ambiguous. Pick a handler.      |
+| `jev-triage` | `jev_triage` | Rank changed files before the deep review.       |
+| `jev-gate`   | `jev_ask`    | Check a finished diff before independent review. |
 
-All three ask the same way: one batched `jev_ask` with several questions.
-`jev-mcp` also exposes `jev_check`, `jev_classify`, `jev_score`, and
-`jev_triage`. Call those directly when no skill covers the judgment.
+`jev-route` and `jev-gate` batch independent questions in one `jev_ask`.
+`jev-triage` asks the same question set about each changed file with
+`jev_triage`. `jev-mcp` also exposes `jev_check`, `jev_classify`, and
+`jev_score`. Call those directly when no skill covers the judgment.
 
-- Ask one narrow question per judgment. Put the meaning in `question`. It is
-  the only text the model sees.
-- Keep thresholds in code. Pick them from what a wrong call costs. Check the
-  mapping before the numbers: an action-driven mapping escalates a
-  low-confidence `approve` wherever the thresholds sit.
-- `jev-gate` uses `act_above: 0.55` and `review_above: 0.3`, and maps the
-  chosen option rather than the action. Provisional: one observation,
-  2026-09-29 on jev 1.13.0. Re-derive once a real sample exists, and log the
-  confidence and choice each time.
+- Ask one narrow, observable question per judgment. Put the meaning in
+  `question`. It is the only instruction the model sees.
+- Keep policy and thresholds in code. Consume every answer you request.
+- Prefer the probability of the chosen option over generic confidence when a
+  choice controls an action. Use a Noul probability directly for a check.
+- `jev-gate` uses atomic checks with `yes_at_or_above: 0.7` and
+  `no_at_or_below: 0.3`. Code maps definite failures to `needs-changes` and
+  uncertainty to `abstain`.
 - Treat `yes` as a probability, not a truth. Calibrate on the target domain.
-- Log the versioned model id from the response, not the alias.
+- Pin a model version while calibrating. The config uses `jev-1.14.0` through
+  `JEV_MODEL`. Log the versioned model id from each response, not the alias.
 - Jev has its own key and its own provider. It does not share the chat model's
   budget. Do not add it to `small_model`.
 
 ### Set up Jev
 
 `jev-mcp` is vendored under `~/.config/opencode/node_modules`. The config runs
-it with `node` on the local entry point, not through `npx`.
+it with `node` on the local entry point, not through `npx`. The installed version
+lives in `~/.config/opencode/package.json`; the generated seed pins the same
+version. `jev_triage` requires `jev-mcp` 0.5.0 or later.
 
 Get a key from `https://console.typesafe.ai/settings/keys`. Put it in
 `~/.config/typesafe/key` (mode `600`) or export `TYPESAFE_API_KEY`. Do not add
@@ -110,12 +113,11 @@ point at its source.
 Two limits, both measured rather than assumed:
 
 - `jev_triage` `path` items are confined to the server's working directory. A path
-  outside it fails. Pass the text inline to judge a file elsewhere.
-- For per-file scoring, read the **score**, not the returned `action`. Confidence
-  on this question type runs low, so the `jev_triage` and `jev_score` tool
-  defaults of `act_above: 0.8` and `review_above: 0.5` return `abstain` for most
-  files even when the scores clearly separate. Those are the tool defaults, not
-  the `jev-gate` numbers above. Rank on the score and decide yourself.
+  outside it fails. Pass redacted text inline when a file cannot be sent safely
+  as a path.
+- For per-file scoring, rank on the **score**, then read the level probabilities.
+  Confidence describes distribution shape, not whether the file is safe to skip.
+  A file access error means the file was not judged; read it manually.
 
 ## Reuse
 

@@ -126,3 +126,4 @@ There is no repo-wide test suite. Before finishing:
 - `python -m unittest` (or `python path/to/test_*.py`) passes for scripts that have tests.
 - No secrets landed in the diff.
 - Existing scripts you did not need were not touched.
+- Dispatch the `review` subagent on the full uncommitted diff before calling the work done. Break a large review apart: one scoped dispatch per area, each given the files it owns, since the reviewer's step budget is small. A review that returns no verdict is not an `APPROVE` — re-scope and re-dispatch.
